@@ -1,0 +1,6 @@
+[submodule "thirdparty/libepoxy"]
+	path = thirdparty/libepoxy
+	url = https://github.com/anholt/libepoxy
+[submodule "thirdparty/glew"]
+	path = thirdparty/glew
+	url = https://github.com/nigels-com/glew

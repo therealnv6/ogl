@@ -16,7 +16,7 @@ namespace input
 		RawMouseMotion = GLFW_RAW_MOUSE_MOTION
 	};
 
-	enum class input
+	enum class key
 	{
 		a = GLFW_KEY_A,
 		b = GLFW_KEY_B,

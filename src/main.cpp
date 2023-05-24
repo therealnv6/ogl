@@ -171,13 +171,13 @@ public:
 		horizontalAngle += mouseSpeed * deltaTime * mouseDeltaX;
 		verticalAngle += mouseSpeed * deltaTime * mouseDeltaY;
 
-		std::map<input::input, glm::vec3> keyToDirection {
-			{ input::input::w, *direction },
-			{ input::input::a, -*right },
-			{ input::input::s, -*direction },
-			{ input::input::d, *right },
-			{ input::input::spacebar, glm::vec3(0.0f, 1.0f, 0.0f) }, // Up
-			{ input::input::shift, glm::vec3(0.0f, -1.0f, 0.0f) }  // Down
+		std::map<input::key, glm::vec3> keyToDirection {
+			{ input::key::w, *direction },
+			{ input::key::a, -*right },
+			{ input::key::s, -*direction },
+			{ input::key::d, *right },
+			{ input::key::spacebar, glm::vec3(0.0f, 1.0f, 0.0f) }, // Up
+			{ input::key::shift, glm::vec3(0.0f, -1.0f, 0.0f) }	// Down
 		};
 
 		// Iterate over the input keys and perform the movement

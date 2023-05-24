@@ -63,7 +63,7 @@ namespace frame
 				}
 			}
 
-			if (this->is_pressed(input::input::esc))
+			if (this->is_pressed(input::key::esc))
 			{
 				ImGui::SetWindowFocus();
 				io.MouseDrawCursor = true;
@@ -96,7 +96,7 @@ namespace frame
 			});
 		}
 
-		bool is_pressed(input::input key)
+		bool is_pressed(input::key key)
 		{
 			return glfwGetKey(context->window, static_cast<int>(key)) == GLFW_PRESS;
 		}

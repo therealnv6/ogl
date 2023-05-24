@@ -35,7 +35,9 @@ namespace gfx
 				throw std::runtime_error("failed to open glfw window");
 			}
 
-			glfwMakeContextCurrent(window); // Initialize GLEW
+			glfwMakeContextCurrent(window);
+			glfwSwapInterval(0);
+
 			glewExperimental = true;
 
 			if (glewInit() != GLEW_OK)

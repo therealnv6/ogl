@@ -95,17 +95,13 @@ class test_framework : public frame::framework
 public:
 	entt::registry registry;
 
-	// position
 	glm::vec3 position = glm::vec3(0, 0, 5);
-	// horizontal angle : toward -Z
 	float horizontalAngle = 3.14f;
-	// vertical angle : 0, look at the horizon
 	float verticalAngle = 0.0f;
-	// Initial Field of View
-	float initialFoV = 45.0f;
+	float initialFov = 45.0f;
 
-	float speed = 3.0f; // 3 units / second
-	float mouseSpeed = 0.005f;
+	float speed = 30.0f;
+	float mouseSpeed = 1.5f;
 
 	std::unique_ptr<buffer::buffer<std::array<float, 9 * 12>>> vertices_buffer;
 	std::unique_ptr<buffer::buffer<std::array<float, 9 * 12>>> color_buffer;
@@ -122,7 +118,7 @@ public:
 	void initialize() override
 	{
 		this->registry = entt::basic_registry();
-		// this->init_gui();
+		this->init_gui();
 
 		context->input_mode(input::input_mode::StickyKeys, true);
 		context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_HIDDEN);
@@ -132,7 +128,7 @@ public:
 
 		gfx::clear_color({ 0.0, 0.0, 0.4, 0.0 });
 
-		// this must be called first
+		// this must be called first before making the buffer
 		buffer::reserve_vertex_array(1);
 
 		this->vertices_buffer = std::make_unique<buffer::buffer<std::array<float, 9 * 12>>>(&data, sizeof(std::array<float, 9 * 12>), buffer::draw_type::Static);
@@ -146,15 +142,24 @@ public:
 	void tick_gui(GLFWwindow *window, framework &framework) override
 	{
 		this->gui_frame();
-		ImGui::Begin("Hello, world!");
-		ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
+
+		ImGuiIO &io = ImGui::GetIO();
+		(void) io;
+
+		ImGui::Begin("ogl voxel");
+
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+		ImGui::Text("horizontalAngle: %f", horizontalAngle);
+		ImGui::Text("verticalAngle: %f", verticalAngle);
+
 		ImGui::End();
 	}
 
 	void tick(GLFWwindow *window, framework &framework) override
 	{
-
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) context->width() / (float) context->height(), 0.1f, 100.0f);
+
 		glm::vec3 direction(
 			cos(verticalAngle) * sin(horizontalAngle),
 			sin(verticalAngle),
@@ -163,7 +168,8 @@ public:
 		glm::vec3 right = glm::vec3(
 			sin(horizontalAngle - 3.14f / 2.0f),
 			0,
-			cos(horizontalAngle - 3.14f / 2.0f));
+			cos(horizontalAngle - 3.14f / 2.0f) //
+		);
 
 		glm::vec3 up = glm::cross(right, direction);
 		glm::mat4 view = glm::lookAt(
@@ -174,32 +180,7 @@ public:
 
 		if (ImGui::GetCurrentContext() == nullptr || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
 		{
-			context->reset_mouse();
-
-			auto [xpos, ypos] = context->get_mouse_pos();
-
-			horizontalAngle += mouseSpeed * deltaTime * float(1920.0 / 2 - xpos);
-			verticalAngle += mouseSpeed * deltaTime * float(1080.0 / 2 - ypos);
-
-			if (this->is_pressed(input::input::w))
-			{
-				position += direction * deltaTime * speed;
-			}
-
-			if (this->is_pressed(input::input::a))
-			{
-				position -= right * deltaTime * speed;
-			}
-
-			if (this->is_pressed(input::input::s))
-			{
-				position -= direction * deltaTime * speed;
-			}
-
-			if (this->is_pressed(input::input::d))
-			{
-				position += right * deltaTime * speed;
-			}
+			this->handle_input(&direction, &right);
 		}
 
 		glm::mat4 model = glm::mat4(1.0f);
@@ -215,6 +196,40 @@ public:
 		color_buffer->bind_vertex(1, 3);
 
 		gfx::draw_arrays(0, 12 * 3);
+	}
+
+	void handle_input(const glm::vec3 *direction, const glm::vec3 *right)
+	{
+		auto [width, height] = context->size();
+		auto [xpos, ypos] = context->get_mouse_pos();
+
+		context->reset_mouse();
+
+		float mouseDeltaX = static_cast<float>(width / 2.0 - xpos);
+		float mouseDeltaY = static_cast<float>(height / 2.0 - ypos);
+
+		horizontalAngle += mouseSpeed * deltaTime * mouseDeltaX;
+		verticalAngle += mouseSpeed * deltaTime * mouseDeltaY;
+
+		if (this->is_pressed(input::input::w))
+		{
+			position += *direction * speed * deltaTime;
+		}
+
+		if (this->is_pressed(input::input::a))
+		{
+			position -= *right * speed * deltaTime;
+		}
+
+		if (this->is_pressed(input::input::s))
+		{
+			position -= *direction * speed * deltaTime;
+		}
+
+		if (this->is_pressed(input::input::d))
+		{
+			position += *right * speed * deltaTime;
+		}
 	}
 };
 

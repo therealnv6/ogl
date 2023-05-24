@@ -22,5 +22,6 @@ namespace input
 		a = GLFW_KEY_A,
 		s = GLFW_KEY_S,
 		d = GLFW_KEY_D,
+		esc = GLFW_KEY_ESCAPE,
 	};
 }

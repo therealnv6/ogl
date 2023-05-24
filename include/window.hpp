@@ -12,6 +12,8 @@ namespace gfx
 	class context
 	{
 	public:
+		GLFWwindow *window; // (In the accompanying source code, this variable is global for simplicity)
+
 		context(const char *title, uint16_t width, uint16_t height)
 		{
 			if (!glfwInit())
@@ -52,14 +54,9 @@ namespace gfx
 			glfwSwapBuffers(window);
 		}
 
-		void enable_input_mode(input::input_mode mode)
+		void input_mode(input::input_mode mode, GLenum value)
 		{
-			glfwSetInputMode(window, static_cast<int>(mode), GLFW_TRUE);
-		}
-
-		void disable_input_mode(input::input_mode mode)
-		{
-			glfwSetInputMode(window, static_cast<int>(mode), GLFW_FALSE);
+			glfwSetInputMode(window, static_cast<int>(mode), value);
 		}
 
 		void poll_events()
@@ -87,7 +84,23 @@ namespace gfx
 			return std::make_pair(width, height);
 		}
 
-	private:
-		GLFWwindow *window; // (In the accompanying source code, this variable is global for simplicity)
+		std::pair<double, double> get_mouse_pos()
+		{
+			double xpos;
+			double ypos;
+
+			glfwGetCursorPos(window, &xpos, &ypos);
+
+			return std::make_pair(xpos, ypos);
+		}
+
+		void reset_mouse()
+		{
+			std::pair<int, int> size = this->size();
+
+			glfwSetCursorPos(window,
+				size.first / 2,
+				size.second / 2);
+		}
 	};
 }

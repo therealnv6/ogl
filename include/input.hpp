@@ -15,4 +15,12 @@ namespace input
 		LockKeyMods = GLFW_LOCK_KEY_MODS,
 		RawMouseMotion = GLFW_RAW_MOUSE_MOTION
 	};
+
+	enum class input
+	{
+		w = GLFW_KEY_W,
+		a = GLFW_KEY_A,
+		s = GLFW_KEY_S,
+		d = GLFW_KEY_D,
+	};
 }

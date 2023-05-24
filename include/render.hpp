@@ -19,6 +19,12 @@ namespace gfx
 		Greater = GL_GREATER,
 	};
 
+	enum enable_fields : uint16_t
+	{
+		CullFace = GL_CULL_FACE,
+		DepthTest = GL_DEPTH_TEST,
+	};
+
 	void depth(uint16_t flag);
 	void enable(uint16_t flags);
 	void clear(uint16_t buffers);

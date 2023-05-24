@@ -2,11 +2,16 @@
 
 namespace gfx
 {
+	void enable(uint16_t flag)
+	{
+		glEnable(flag);
+	}
+
 	void depth(uint16_t flag)
 	{
 		if (!glIsEnabled(GL_DEPTH_TEST))
 		{
-			glEnable(GL_DEPTH_TEST);
+			gfx::enable(gfx::enable_fields::DepthTest);
 		}
 
 		glDepthFunc(flag);

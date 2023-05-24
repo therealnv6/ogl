@@ -15,4 +15,5 @@ namespace gfx
 
 	void clear(clear_buffer buffers);
 	void clear_color(std::array<float, 4> color);
+	void draw_triangles(int attributeIndex, int size, int count);
 }

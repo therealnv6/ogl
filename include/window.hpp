@@ -42,7 +42,7 @@ namespace gfx
 			}
 		};
 
-		void run(std::function<void(GLFWwindow *)> call)
+		void take(std::function<void(GLFWwindow *)> call)
 		{
 			call(window);
 		}
@@ -65,6 +65,26 @@ namespace gfx
 		void poll_events()
 		{
 			glfwPollEvents();
+		}
+
+		int width()
+		{
+			return size().first;
+		}
+
+		int height()
+		{
+			return size().second;
+		}
+
+		std::pair<int, int> size()
+		{
+			int width;
+			int height;
+
+			glfwGetWindowSize(window, &width, &height);
+
+			return std::make_pair(width, height);
 		}
 
 	private:

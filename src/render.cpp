@@ -2,6 +2,16 @@
 
 namespace gfx
 {
+	void depth(uint16_t flag)
+	{
+		if (!glIsEnabled(GL_DEPTH_TEST))
+		{
+			glEnable(GL_DEPTH_TEST);
+		}
+
+		glDepthFunc(flag);
+	}
+
 	void clear(uint16_t buffers)
 	{
 		glClear(static_cast<uint16_t>(buffers));

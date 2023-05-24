@@ -13,6 +13,14 @@ namespace gfx
 		All = Color | Depth | Stencil
 	};
 
+	enum depth_function : uint16_t
+	{
+		Less = GL_LESS,
+		Greater = GL_GREATER,
+	};
+
+	void depth(uint16_t flag);
+	void enable(uint16_t flags);
 	void clear(uint16_t buffers);
 	void clear_color(std::array<float, 4> color);
 	void enable_vertex(int attribute_index);

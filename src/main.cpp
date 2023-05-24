@@ -92,7 +92,9 @@ int main()
 
 	context.take([&](auto window) {
 		context.enable_input_mode(input::input_mode::StickyKeys);
+
 		gfx::clear_color({ 0.0, 0.0, 0.4, 0.0 });
+		gfx::depth(gfx::depth_function::Less);
 
 		buffer::reserve_vertex_array(1);
 

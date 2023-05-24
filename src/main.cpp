@@ -117,12 +117,14 @@ int main()
 		{
 			gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
 
-			vertices_buffer.bind();
 			shader.bind();
 
 			glUniformMatrix4fv(matrix_id, 1, false, &mvp[0][0]);
 
-			gfx::vertex_attribute(0, 3, 12 * 3);
+			vertices_buffer.bind_vertex(0, 3);
+			color_buffer.bind_vertex(1, 3);
+
+			gfx::draw_arrays(0, 12 * 3);
 
 			context.swap_buffers();
 			context.poll_events();

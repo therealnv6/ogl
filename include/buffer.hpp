@@ -1,5 +1,6 @@
 #pragma once
 #include <GL/glew.h>
+#include <render.hpp>
 
 namespace buffer
 {
@@ -24,7 +25,14 @@ namespace buffer
 		void bind()
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-		};
+		}
+
+		void bind_vertex(int attribute_pos, int size, void *offset = nullptr)
+		{
+			gfx::enable_vertex(attribute_pos);
+			this->bind();
+			gfx::vertex_attribute(attribute_pos, size, offset);
+		}
 
 	private:
 		GLuint buffer_id;

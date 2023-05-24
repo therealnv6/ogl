@@ -15,5 +15,7 @@ namespace gfx
 
 	void clear(uint16_t buffers);
 	void clear_color(std::array<float, 4> color);
-	void vertex_attribute(int attributeIndex, int size, int count);
+	void enable_vertex(int attribute_index);
+	void vertex_attribute(int attributeIndex, int size, void *offset);
+	void draw_arrays(int attributeIndex, int count);
 }

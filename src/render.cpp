@@ -12,18 +12,25 @@ namespace gfx
 		glClearColor(color[0], color[1], color[2], color[3]);
 	}
 
-	void vertex_attribute(int attributeIndex, int size, int count)
+	void enable_vertex(int attribute_index)
 	{
-		glEnableVertexAttribArray(attributeIndex);
+		glEnableVertexAttribArray(attribute_index);
+	}
+
+	void vertex_attribute(int attributeIndex, int size, void *offset)
+	{
 		glVertexAttribPointer(
 			attributeIndex, // attribute index
 			size, // size
 			GL_FLOAT, // type
 			GL_FALSE, // normalized
 			0, // stride
-			nullptr // array buffer offset
+			offset // array buffer offset
 		);
+	}
+
+	void draw_arrays(int attributeIndex, int count)
+	{
 		glDrawArrays(GL_TRIANGLES, 0, count);
-		glDisableVertexAttribArray(attributeIndex);
 	}
 }

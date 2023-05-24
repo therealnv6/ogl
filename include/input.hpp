@@ -23,5 +23,7 @@ namespace input
 		s = GLFW_KEY_S,
 		d = GLFW_KEY_D,
 		esc = GLFW_KEY_ESCAPE,
+		spacebar = GLFW_KEY_SPACE,
+		shift = GLFW_KEY_LEFT_SHIFT,
 	};
 }

@@ -15,13 +15,11 @@ int main()
 		context.enable_input_mode(input::input_mode::StickyKeys);
 		gfx::clear_color({ 0.0, 0.0, 0.4, 0.0 });
 
-		// clang-format off
-    std::array<float, 9> data = {
-      -1.0f, -1.0f, 0.0f,
-			 1.0f, -1.0f, 0.0f,
-			 0.0f,  1.0f, 0.0f, 
-    };
-		// clang-format on
+		std::array<float, 9> data = {
+			-1.0f, -1.0f, 0.0f, //
+			1.0f, -1.0f, 0.0f, //
+			0.0f, 1.0f, 0.0f, //
+		};
 
 		buffer::reserve_vertex_array(1);
 		buffer::buffer<std::array<float, 9>> buffer(&data, sizeof(std::array<float, 9>), buffer::draw_type::Static);

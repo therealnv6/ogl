@@ -4,7 +4,7 @@
 
 namespace gfx
 {
-	enum class clear_buffer
+	enum clear_buffer : uint16_t
 	{
 		Color = 0x00004000,
 		Depth = 0x00000100,
@@ -13,7 +13,7 @@ namespace gfx
 		All = Color | Depth | Stencil
 	};
 
-	void clear(clear_buffer buffers);
+	void clear(uint16_t buffers);
 	void clear_color(std::array<float, 4> color);
-	void draw_triangles(int attributeIndex, int size, int count);
+	void vertex_attribute(int attributeIndex, int size, int count);
 }

@@ -2,9 +2,9 @@
 
 namespace gfx
 {
-	void clear(clear_buffer buffers)
+	void clear(uint16_t buffers)
 	{
-		glClear(static_cast<unsigned int>(buffers));
+		glClear(static_cast<uint16_t>(buffers));
 	}
 
 	void clear_color(std::array<float, 4> color)
@@ -12,7 +12,7 @@ namespace gfx
 		glClearColor(color[0], color[1], color[2], color[3]);
 	}
 
-	void draw_triangles(int attributeIndex, int size, int count)
+	void vertex_attribute(int attributeIndex, int size, int count)
 	{
 		glEnableVertexAttribArray(attributeIndex);
 		glVertexAttribPointer(

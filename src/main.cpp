@@ -56,7 +56,7 @@ public:
 		buffer::reserve_vertex_array(1);
 
 		this->vertices_buffer = std::make_unique<buffer::buffer<std::array<float, 9 * 12>>>(&data, sizeof(std::array<float, 9 * 12>), buffer::draw_type::Static);
-		this->color_buffer = std::make_unique<buffer::buffer<std::array<float, 9 * 12>>>(&colors, sizeof(std::array<float, 9 * 12>), buffer::draw_type::Static);
+		this->color_buffer = std::make_unique<buffer::buffer<std::array<float, 9 * 12>>>(&colors, sizeof(std::array<float, 9 * 12>), buffer::draw_type::Stream);
 
 		this->shader = std::make_unique<shader::shader>("shaders/simple.vert", "shaders/simple.frag");
 
@@ -95,6 +95,29 @@ public:
 
 	void tick(GLFWwindow *window, framework &framework) override
 	{
+		{
+			float phase = glfwGetTime() * 2.0f * M_PI * 0.2f;
+
+			for (int y = 0; y < 12; y++)
+			{
+				for (int x = 0; x < 9; x++)
+				{
+					float fo = static_cast<float>(x) / (9 - 1);
+					float so = static_cast<float>(y) / (12 - 1);
+
+					float wave = std::sin(fo * 2 * M_PI + phase) * 2.0f;
+					int index = (y * 9 + x) * 3;
+
+					// Map wave value to different color channels
+					colors[index] = (std::sin(wave) + 1.0f) * 0.5f; // Red
+					colors[index + 1] = (std::sin(wave + 2.0f * M_PI / 3.0f) + 1.0f) * 0.5f; // Green
+					colors[index + 2] = (std::sin(wave + 4.0f * M_PI / 3.0f) + 1.0f) * 0.5f; // Blue
+				}
+			}
+		}
+
+		color_buffer->update(&colors);
+
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) context->width() / (float) context->height(), 0.1f, 100.0f);
 
 		glm::vec3 direction(

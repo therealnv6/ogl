@@ -16,10 +16,18 @@ namespace buffer
 	{
 	public:
 		buffer(T *data, int size, draw_type type)
+			: type { type }
+			, size { size }
 		{
 			glGenBuffers(1, &buffer_id);
 			glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
 			glBufferData(GL_ARRAY_BUFFER, size, reinterpret_cast<const void *>(data), static_cast<int>(type));
+		}
+
+		void update(T *data)
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, size, reinterpret_cast<const void *>(data));
 		}
 
 		void bind()
@@ -36,6 +44,8 @@ namespace buffer
 
 	private:
 		GLuint buffer_id;
+		draw_type type;
+		int size;
 	};
 
 	GLuint reserve_vertex_array(GLuint index = 1);

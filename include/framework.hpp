@@ -104,36 +104,35 @@ namespace frame
 	private:
 		void style_imgui()
 		{
-
-			ImGuiStyle *style = &ImGui::GetStyle();
+			ImGuiStyle &style = ImGui::GetStyle();
 
 			// Set Style Stuff
-			style->FrameRounding = 0.0f;
-			style->WindowRounding = 0.0f;
-			style->ChildRounding = 0.0f;
-			style->PopupRounding = 0.0f;
-			style->ScrollbarRounding = 0.0f;
-			style->GrabRounding = 0.0f;
-			style->TabRounding = 0.0f;
+			style.FrameRounding = 0.5f;
+			style.WindowRounding = 0.5f;
+			style.ChildRounding = 0.5f;
+			style.PopupRounding = 0.5f;
+			style.ScrollbarRounding = 0.5f;
+			style.GrabRounding = 0.5f;
+			style.TabRounding = 0.5f;
 
-			style->WindowPadding = ImVec2(20.0f, 20.0f);
-			style->TouchExtraPadding = ImVec2(10.0f, 10.0f);
-			style->FramePadding = ImVec2(5.0f, 5.0f);
-			style->ItemInnerSpacing = ImVec2(20.0f, 20.0f);
-			style->ItemSpacing = ImVec2(20.0f, 20.0f);
-			style->WindowTitleAlign = ImVec2(0.5f, 0.5f);
+			style.WindowPadding = ImVec2(20.0f, 20.0f);
+			style.TouchExtraPadding = ImVec2(10.0f, 10.0f);
+			style.FramePadding = ImVec2(5.0f, 5.0f);
+			style.ItemInnerSpacing = ImVec2(20.0f, 20.0f);
+			style.ItemSpacing = ImVec2(20.0f, 20.0f);
+			style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
 
-			style->WindowBorderSize = 0.0f;
-			style->FrameBorderSize = 0.0f;
-			style->PopupBorderSize = 0.0f;
-			style->TabBorderSize = 0.0f;
+			style.WindowBorderSize = 0.0f;
+			style.FrameBorderSize = 0.0f;
+			style.PopupBorderSize = 0.0f;
+			style.TabBorderSize = 0.0f;
 
-			style->ScrollbarSize = 20.0f;
-			style->IndentSpacing = 30.0f;
-			style->GrabMinSize = 20.0f;
+			style.ScrollbarSize = 20.0f;
+			style.IndentSpacing = 30.0f;
+			style.GrabMinSize = 20.0f;
 
 			// Set Colors
-			ImVec4 *colors = style->Colors;
+			ImVec4 *colors = style.Colors;
 			colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
 			colors[ImGuiCol_TextDisabled] = ImVec4(1.00f, 0.82f, 0.71f, 1.00f);
 			colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.67f);

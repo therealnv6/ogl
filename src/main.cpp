@@ -1,9 +1,12 @@
+#include "imgui.h"
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <buffer.hpp>
+#include <entt/entt.hpp>
 #include <framework.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <imgui.h>
 #include <render.hpp>
 #include <shader.hpp>
 #include <spdlog/spdlog.h>
@@ -90,6 +93,8 @@ std::array<float, 9 * 12> colors = {
 class test_framework : public frame::framework
 {
 public:
+	entt::registry registry;
+
 	// position
 	glm::vec3 position = glm::vec3(0, 0, 5);
 	// horizontal angle : toward -Z
@@ -116,6 +121,9 @@ public:
 
 	void initialize() override
 	{
+		this->registry = entt::basic_registry();
+		// this->init_gui();
+
 		context->input_mode(input::input_mode::StickyKeys, true);
 		context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_HIDDEN);
 
@@ -135,16 +143,16 @@ public:
 		this->matrix_id = shader->get_uniform_location("mvp");
 	}
 
+	void tick_gui(GLFWwindow *window, framework &framework) override
+	{
+		this->gui_frame();
+		ImGui::Begin("Hello, world!");
+		ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
+		ImGui::End();
+	}
+
 	void tick(GLFWwindow *window, framework &framework) override
 	{
-		std::pair<double, double> mouse = context->get_mouse_pos();
-		context->reset_mouse();
-
-		double xpos = mouse.first;
-		double ypos = mouse.second;
-
-		horizontalAngle += mouseSpeed * deltaTime * float(1920.0 / 2 - xpos);
-		verticalAngle += mouseSpeed * deltaTime * float(1080.0 / 2 - ypos);
 
 		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) context->width() / (float) context->height(), 0.1f, 100.0f);
 		glm::vec3 direction(
@@ -157,32 +165,42 @@ public:
 			0,
 			cos(horizontalAngle - 3.14f / 2.0f));
 
-		if (this->is_pressed(input::input::w))
-		{
-			position += direction * deltaTime * speed;
-		}
-
-		if (this->is_pressed(input::input::a))
-		{
-			position -= right * deltaTime * speed;
-		}
-
-		if (this->is_pressed(input::input::s))
-		{
-			position -= direction * deltaTime * speed;
-		}
-
-		if (this->is_pressed(input::input::d))
-		{
-			position += right * deltaTime * speed;
-		}
-
 		glm::vec3 up = glm::cross(right, direction);
 		glm::mat4 view = glm::lookAt(
 			glm::vec3(position), // Camera is at (4,3,3), in World Space
 			glm::vec3(position + direction), // and looks at the origin
 			glm::vec3(up) // Head is up (set to 0,-1,0 to look upside-down)
 		);
+
+		if (ImGui::GetCurrentContext() == nullptr || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
+		{
+			context->reset_mouse();
+
+			auto [xpos, ypos] = context->get_mouse_pos();
+
+			horizontalAngle += mouseSpeed * deltaTime * float(1920.0 / 2 - xpos);
+			verticalAngle += mouseSpeed * deltaTime * float(1080.0 / 2 - ypos);
+
+			if (this->is_pressed(input::input::w))
+			{
+				position += direction * deltaTime * speed;
+			}
+
+			if (this->is_pressed(input::input::a))
+			{
+				position -= right * deltaTime * speed;
+			}
+
+			if (this->is_pressed(input::input::s))
+			{
+				position -= direction * deltaTime * speed;
+			}
+
+			if (this->is_pressed(input::input::d))
+			{
+				position += right * deltaTime * speed;
+			}
+		}
 
 		glm::mat4 model = glm::mat4(1.0f);
 		glm::mat4 mvp = (projection * view * model);

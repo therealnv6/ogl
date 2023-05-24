@@ -4,3 +4,9 @@
 [submodule "thirdparty/glew"]
 	path = thirdparty/glew
 	url = https://github.com/nigels-com/glew
+[submodule "thirdparty/entt"]
+	path = thirdparty/entt
+	url = https://github.com/skypjack/entt
+[submodule "thirdparty/imgui"]
+	path = thirdparty/imgui
+	url = https://github.com/ocornut/imgui

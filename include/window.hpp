@@ -96,11 +96,11 @@ namespace gfx
 
 		void reset_mouse()
 		{
-			std::pair<int, int> size = this->size();
+			auto [width, height] = this->size();
 
 			glfwSetCursorPos(window,
-				size.first / 2,
-				size.second / 2);
+				width / 2.0,
+				height / 2.0);
 		}
 	};
 }

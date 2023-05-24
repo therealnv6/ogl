@@ -4,6 +4,7 @@ project(meowfu)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 20)
+set(IMGUI_LIBRARIES ImGui;glfw;GLEW;GL)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -14,8 +15,12 @@ find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
 
 add_subdirectory(thirdparty/glfw)
+add_subdirectory(thirdparty/entt)
 
 find_program(MOLD_LINKER_EXE mold)
+set(IMGUI_DIR thirdparty/imgui)
+
+include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
 
 if(MOLD_LINKER_EXE)
     # If mold is found, set the linker flags to use it
@@ -35,11 +40,21 @@ file(GLOB_RECURSE SOURCES
 )
 
 set(SOURCES 
-  ${SOURCES} 
+  ${SOURCES}
   thirdparty/stb_image.h
 )
 
-add_executable(${PROJECT_NAME} ${SOURCES})
+set(IMGUI_SOURCES
+  ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp 
+  ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp 
+  ${IMGUI_DIR}/imgui.cpp 
+  ${IMGUI_DIR}/imgui_draw.cpp 
+  ${IMGUI_DIR}/imgui_demo.cpp 
+  ${IMGUI_DIR}/imgui_tables.cpp 
+  ${IMGUI_DIR}/imgui_widgets.cpp
+)
+
+add_executable(${PROJECT_NAME} ${IMGUI_SOURCES} ${SOURCES})
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
@@ -51,6 +66,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     glfw 
+    EnTT::EnTT
     GLEW::GLEW ${GLEW_LIBRARIES} 
     ${OPENGL_LIBRARY} 
     spdlog::spdlog

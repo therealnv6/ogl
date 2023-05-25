@@ -189,10 +189,17 @@ public:
 				move.horizontalAngle += MOUSE_SPEED * framework->frame.deltaTime * mouseDeltaX;
 				move.verticalAngle += MOUSE_SPEED * framework->frame.deltaTime * mouseDeltaY;
 
+				// yikes (should change this sometime)
+				glm::vec3 direction(
+					cos(move.verticalAngle) * sin(move.horizontalAngle),
+					sin(move.verticalAngle),
+					cos(move.verticalAngle) * cos(move.horizontalAngle) //
+				);
+
 				std::map<input::key, glm::vec3> keyToDirection {
-					{ input::key::w, camera.get_direction() },
+					{ input::key::w, -direction },
 					{ input::key::a, -camera.forward() },
-					{ input::key::s, -camera.get_direction() },
+					{ input::key::s, direction },
 					{ input::key::d, camera.forward() },
 					{ input::key::spacebar, glm::vec3(0.0f, 1.0f, 0.0f) }, // Up
 					{ input::key::shift, glm::vec3(0.0f, -1.0f, 0.0f) }	// Down

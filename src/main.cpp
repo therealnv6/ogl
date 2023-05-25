@@ -2,27 +2,27 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <buffer.hpp>
+#include <camera.hpp>
 #include <framework.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 #include <imgui.h>
 #include <render.hpp>
 #include <shader.hpp>
 #include <spdlog/spdlog.h>
+#include <vertices.h>
 #include <window.hpp>
 
-#include <vertices.h>
+const static float MOVEMENT_SPEED = 30.0f;
+const static float MOUSE_SPEED = 1.5f;
 
 struct movement {
 	glm::vec3 position = glm::vec3(0, 0, 5);
-	glm::vec3 direction = glm::vec3(0, 0, 0);
-	glm::vec3 right = glm::vec3(0, 0, 0);
 
 	float horizontalAngle = 3.14f;
 	float verticalAngle = 0.0f;
-	float initialFov = 45.0f;
-	float speed = 30.0f;
-	float mouseSpeed = 1.5f;
 };
 
 struct poll_input_event {
@@ -70,14 +70,13 @@ public:
 						ImGui::Text("horizontalAngle: %f", movement.horizontalAngle);
 						ImGui::SameLine();
 						ImGui::Text("verticalAngle: %f", movement.verticalAngle);
+						ImGui::Text("x: %f, y: %f, z: %f", movement.position.x, movement.position.y, movement.position.z);
 
 						ImGui::EndTabItem();
 					}
 
 					if (ImGui::BeginTabItem("Controls"))
 					{
-						ImGui::SliderFloat("speed", &movement.speed, 10.0f, 100.0f);
-						ImGui::SliderFloat("mouseSpeed", &movement.mouseSpeed, 0.5f, 10.0f);
 						ImGui::EndTabItem();
 					}
 
@@ -138,33 +137,19 @@ public:
 
 			auto entity_view = registry->view<movement>();
 
+			auto camera_entity = registry->view<gfx::camera>().front();
+			auto camera = registry->get<gfx::camera>(camera_entity);
+
 			for (auto [entity, move] : entity_view.each())
 			{
-				glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) 2560 / (float) 1440, 0.1f, 100.0f);
+				camera.rotate(move.horizontalAngle, -move.verticalAngle);
+				camera.move(move.position);
 
-				glm::vec3 direction(
-					cos(move.verticalAngle) * sin(move.horizontalAngle),
-					sin(move.verticalAngle),
-					cos(move.verticalAngle) * cos(move.horizontalAngle));
-
-				glm::vec3 right = glm::vec3(
-					sin(move.horizontalAngle - 3.14f / 2.0f),
-					0,
-					cos(move.horizontalAngle - 3.14f / 2.0f) //
-				);
-
-				glm::vec3 up = glm::cross(right, direction);
-				glm::mat4 view = glm::lookAt(
-					glm::vec3(move.position), // Camera is at (4,3,3), in World Space
-					glm::vec3(move.position + direction), // and looks at the origin
-					glm::vec3(up) // Head is up (set to 0,-1,0 to look upside-down)
-				);
+				auto projection = camera.get_projection(2560.0 / 1440.0);
+				auto view = camera.get_view_matrix();
 
 				if (ImGui::GetCurrentContext() == nullptr || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
 				{
-					move.direction = direction;
-					move.right = right;
-
 					framework->dispatcher.trigger(poll_input_event { registry, framework });
 				}
 
@@ -196,16 +181,19 @@ public:
 			float mouseDeltaX = static_cast<float>(width / 2.0 - xpos);
 			float mouseDeltaY = static_cast<float>(height / 2.0 - ypos);
 
+			auto camera_entity = registry->view<gfx::camera>().front();
+			auto camera = registry->get<gfx::camera>(camera_entity);
+
 			for (auto [entity, move] : entity_view.each())
 			{
-				move.horizontalAngle += move.mouseSpeed * framework->frame.deltaTime * mouseDeltaX;
-				move.verticalAngle += move.mouseSpeed * framework->frame.deltaTime * mouseDeltaY;
+				move.horizontalAngle += MOUSE_SPEED * framework->frame.deltaTime * mouseDeltaX;
+				move.verticalAngle += MOUSE_SPEED * framework->frame.deltaTime * mouseDeltaY;
 
 				std::map<input::key, glm::vec3> keyToDirection {
-					{ input::key::w, move.direction },
-					{ input::key::a, -move.right },
-					{ input::key::s, -move.direction },
-					{ input::key::d, move.right },
+					{ input::key::w, camera.get_direction() },
+					{ input::key::a, -camera.forward() },
+					{ input::key::s, -camera.get_direction() },
+					{ input::key::d, camera.forward() },
 					{ input::key::spacebar, glm::vec3(0.0f, 1.0f, 0.0f) }, // Up
 					{ input::key::shift, glm::vec3(0.0f, -1.0f, 0.0f) }	// Down
 				};
@@ -215,7 +203,7 @@ public:
 				{
 					if (framework->is_pressed(entry.first))
 					{
-						move.position += entry.second * move.speed * framework->frame.deltaTime;
+						move.position += entry.second * MOVEMENT_SPEED * framework->frame.deltaTime;
 					}
 				}
 			}
@@ -244,6 +232,7 @@ public:
 
 		this->matrix_id = shader->get_uniform_location("mvp");
 
+		registry.emplace<gfx::camera>(registry.create());
 		registry.emplace<movement>(registry.create());
 
 		listener listener;

@@ -25,7 +25,7 @@ struct movement {
 	float mouseSpeed = 1.5f;
 };
 
-struct input_event {
+struct poll_input_event {
 	entt::registry *registry;
 	frame::framework *framework;
 };
@@ -61,22 +61,27 @@ public:
 
 				ImGui::Begin("ogl voxel");
 
-				if (ImGui::TreeNode("Debug"))
+				if (ImGui::BeginTabBar("whale"))
 				{
-					ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+					if (ImGui::BeginTabItem("Debug"))
+					{
+						ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
-					ImGui::Text("horizontalAngle: %f", movement.horizontalAngle);
-					ImGui::SameLine();
-					ImGui::Text("verticalAngle: %f", movement.verticalAngle);
+						ImGui::Text("horizontalAngle: %f", movement.horizontalAngle);
+						ImGui::SameLine();
+						ImGui::Text("verticalAngle: %f", movement.verticalAngle);
 
-					ImGui::TreePop();
-				}
+						ImGui::EndTabItem();
+					}
 
-				if (ImGui::TreeNode("Controls"))
-				{
-					ImGui::SliderFloat("speed", &movement.speed, 10.0f, 100.0f);
-					ImGui::SliderFloat("mouseSpeed", &movement.mouseSpeed, 0.5f, 10.0f);
-					ImGui::TreePop();
+					if (ImGui::BeginTabItem("Controls"))
+					{
+						ImGui::SliderFloat("speed", &movement.speed, 10.0f, 100.0f);
+						ImGui::SliderFloat("mouseSpeed", &movement.mouseSpeed, 0.5f, 10.0f);
+						ImGui::EndTabItem();
+					}
+
+					ImGui::EndTabBar();
 				}
 
 				ImGui::End();
@@ -140,7 +145,7 @@ public:
 					move.direction = direction;
 					move.right = right;
 
-					framework->dispatcher.trigger(input_event { registry, framework });
+					framework->dispatcher.trigger(poll_input_event { registry, framework });
 				}
 
 				glm::mat4 model = glm::mat4(1.0f);
@@ -159,12 +164,18 @@ public:
 			}
 		}
 
-		void input(const input_event &event)
+		void input(const poll_input_event &event)
 		{
 			auto registry = event.registry;
 			auto entity_view = registry->view<movement>();
 
 			auto framework = static_cast<test_framework *>(event.framework);
+
+			if (framework->is_pressed(input::key::esc))
+			{
+				ImGui::SetWindowFocus();
+				return; // we don't want to handle any of the other input (e.g. resetting the mouse)
+			}
 
 			auto [width, height] = framework->context->size();
 			auto [xpos, ypos] = framework->context->get_mouse_pos();
@@ -173,11 +184,6 @@ public:
 
 			float mouseDeltaX = static_cast<float>(width / 2.0 - xpos);
 			float mouseDeltaY = static_cast<float>(height / 2.0 - ypos);
-
-			if (framework->is_pressed(input::key::esc))
-			{
-				ImGui::SetWindowFocus();
-			}
 
 			for (auto [entity, move] : entity_view.each())
 			{
@@ -207,7 +213,6 @@ public:
 
 	void initialize() override
 	{
-		this->registry = entt::basic_registry();
 		this->init_gui();
 
 		context->input_mode(input::input_mode::StickyKeys, true);
@@ -234,11 +239,7 @@ public:
 
 		dispatcher.sink<frame::tick_event>().connect<&listener::update_gui>(listener);
 		dispatcher.sink<frame::tick_event>().connect<&listener::tick>(listener);
-		dispatcher.sink<input_event>().connect<&listener::input>(listener);
-	}
-
-	void handle_input(const glm::vec3 *direction, const glm::vec3 *right)
-	{
+		dispatcher.sink<poll_input_event>().connect<&listener::input>(listener);
 	}
 };
 

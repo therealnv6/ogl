@@ -120,6 +120,26 @@ public:
 
 				framework->color_buffer->update(&colors);
 
+				gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
+
+				framework->shader->bind();
+
+				framework->vertices_buffer->bind_vertex(0, 3);
+				framework->color_buffer->bind_vertex(1, 3);
+
+				gfx::draw_arrays(0, 12 * 3);
+			}
+		}
+
+		void update_camera(const frame::tick_event &event)
+		{
+			auto registry = event.registry;
+			auto framework = static_cast<test_framework *>(event.data);
+
+			auto entity_view = registry->view<movement>();
+
+			for (auto [entity, move] : entity_view.each())
+			{
 				glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) 2560 / (float) 1440, 0.1f, 100.0f);
 
 				glm::vec3 direction(
@@ -151,16 +171,7 @@ public:
 				glm::mat4 model = glm::mat4(1.0f);
 				glm::mat4 mvp = (projection * view * model);
 
-				gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
-
-				framework->shader->bind();
-
 				glUniformMatrix4fv(framework->matrix_id, 1, false, &mvp[0][0]);
-
-				framework->vertices_buffer->bind_vertex(0, 3);
-				framework->color_buffer->bind_vertex(1, 3);
-
-				gfx::draw_arrays(0, 12 * 3);
 			}
 		}
 
@@ -238,6 +249,7 @@ public:
 		listener listener;
 
 		dispatcher.sink<frame::tick_event>().connect<&listener::update_gui>(listener);
+		dispatcher.sink<frame::tick_event>().connect<&listener::update_camera>(listener);
 		dispatcher.sink<frame::tick_event>().connect<&listener::tick>(listener);
 		dispatcher.sink<poll_input_event>().connect<&listener::input>(listener);
 	}

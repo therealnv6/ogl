@@ -2,7 +2,6 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <buffer.hpp>
-#include <entt/entt.hpp>
 #include <framework.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,8 +16,6 @@
 class test_framework : public frame::framework
 {
 public:
-	entt::registry registry;
-
 	glm::vec3 position = glm::vec3(0, 0, 5);
 	float horizontalAngle = 3.14f;
 	float verticalAngle = 0.0f;
@@ -39,6 +36,39 @@ public:
 		this->initialize();
 	}
 
+	struct listener {
+		test_framework &framework;
+
+		void update_gui()
+		{
+			framework.gui_frame();
+
+			ImGuiIO &io = ImGui::GetIO();
+			(void) io;
+
+			ImGui::Begin("ogl voxel");
+
+			if (ImGui::TreeNode("Debug"))
+			{
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+				ImGui::Text("horizontalAngle: %f", framework.horizontalAngle);
+				ImGui::SameLine();
+				ImGui::Text("verticalAngle: %f", framework.verticalAngle);
+
+				ImGui::TreePop();
+			}
+
+			if (ImGui::TreeNode("Controls"))
+			{
+				ImGui::SliderFloat("speed", &framework.speed, 10.0f, 100.0f);
+				ImGui::SliderFloat("mouseSpeed", &framework.mouseSpeed, 0.5f, 10.0f);
+				ImGui::TreePop();
+			}
+
+			ImGui::End();
+		}
+	};
 	void initialize() override
 	{
 		this->registry = entt::basic_registry();
@@ -50,7 +80,7 @@ public:
 		gfx::enable(gfx::enable_fields::CullFace);
 		gfx::depth(gfx::depth_function::Less);
 
-		gfx::clear_color({ 0.0, 0.0, 0.4, 0.0 });
+		gfx::clear_color({ 0.0, 0.1, 0.2, 0.0 });
 
 		// this must be called first before making the buffer
 		buffer::reserve_vertex_array(1);
@@ -61,36 +91,13 @@ public:
 		this->shader = std::make_unique<shader::shader>("shaders/simple.vert", "shaders/simple.frag");
 
 		this->matrix_id = shader->get_uniform_location("mvp");
+
+		listener listener { *this };
+		dispatcher.sink<frame::tick_event>().connect<&listener::update_gui>(listener);
 	}
 
 	void tick_gui(GLFWwindow *window, framework &framework) override
 	{
-		this->gui_frame();
-
-		ImGuiIO &io = ImGui::GetIO();
-		(void) io;
-
-		ImGui::Begin("ogl voxel");
-
-		if (ImGui::TreeNode("Debug"))
-		{
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-
-			ImGui::Text("horizontalAngle: %f", horizontalAngle);
-			ImGui::SameLine();
-			ImGui::Text("verticalAngle: %f", verticalAngle);
-
-			ImGui::TreePop();
-		}
-
-		if (ImGui::TreeNode("Controls"))
-		{
-			ImGui::SliderFloat("speed", &speed, 10.0f, 100.0f);
-			ImGui::SliderFloat("mouseSpeed", &mouseSpeed, 0.5f, 10.0f);
-			ImGui::TreePop();
-		}
-
-		ImGui::End();
 	}
 
 	void tick(GLFWwindow *window, framework &framework) override
@@ -168,8 +175,8 @@ public:
 		float mouseDeltaX = static_cast<float>(width / 2.0 - xpos);
 		float mouseDeltaY = static_cast<float>(height / 2.0 - ypos);
 
-		horizontalAngle += mouseSpeed * deltaTime * mouseDeltaX;
-		verticalAngle += mouseSpeed * deltaTime * mouseDeltaY;
+		horizontalAngle += mouseSpeed * frame.deltaTime * mouseDeltaX;
+		verticalAngle += mouseSpeed * frame.deltaTime * mouseDeltaY;
 
 		std::map<input::key, glm::vec3> keyToDirection {
 			{ input::key::w, *direction },
@@ -185,7 +192,7 @@ public:
 		{
 			if (this->is_pressed(entry.first))
 			{
-				position += entry.second * speed * deltaTime;
+				position += entry.second * speed * frame.deltaTime;
 			}
 		}
 	}

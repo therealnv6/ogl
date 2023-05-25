@@ -2,24 +2,43 @@
 #include <input.hpp>
 #include <window.hpp>
 
+#include "GLFW/glfw3.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include <entt/entt.hpp>
+
 namespace frame
 {
+	struct time {
+		float lastTime;
+		float deltaTime;
+	};
+
+	struct tick_event {
+		time value;
+	};
+
 	class framework
 	{
 	public:
-		float lastTime = glfwGetTime();
-		float deltaTime;
-
 		gfx::context *context;
+
+		entt::dispatcher dispatcher;
+		entt::registry registry;
+
 		bool imgui = false;
+		time frame;
 
 		framework(gfx::context *context)
 		{
 			this->context = context;
+
+			this->registry = entt::basic_registry();
+			this->dispatcher = entt::dispatcher {};
+
+			registry.emplace<time>(this->registry.create(), glfwGetTime(), 0.0f);
 		}
 
 		virtual void initialize() = 0;
@@ -78,9 +97,10 @@ namespace frame
 					context->poll_events();
 
 					double currentTime = glfwGetTime();
-					deltaTime = float(currentTime - lastTime);
+					frame.deltaTime = float(currentTime - frame.lastTime);
 
 					tick(window, *this);
+					dispatcher.trigger(tick_event(frame));
 
 					if (imgui)
 					{
@@ -90,7 +110,7 @@ namespace frame
 						ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 					}
 
-					lastTime = currentTime;
+					frame.lastTime = currentTime;
 					context->swap_buffers();
 				} while (glfwWindowShouldClose(window) == 0);
 			});
@@ -98,6 +118,8 @@ namespace frame
 
 		bool is_pressed(input::key key)
 		{
+			assert(context && context->window);
+
 			return glfwGetKey(context->window, static_cast<int>(key)) == GLFW_PRESS;
 		}
 

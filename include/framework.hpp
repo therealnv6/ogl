@@ -11,6 +11,8 @@
 
 namespace frame
 {
+	class framework;
+
 	struct time {
 		float lastTime;
 		float deltaTime;
@@ -18,6 +20,8 @@ namespace frame
 
 	struct tick_event {
 		time value;
+		frame::framework *data;
+		entt::registry *registry;
 	};
 
 	class framework
@@ -42,8 +46,6 @@ namespace frame
 		}
 
 		virtual void initialize() = 0;
-		virtual void tick(GLFWwindow *window, framework &framework) = 0;
-		virtual void tick_gui(GLFWwindow *window, framework &framework) = 0;
 
 		void init_gui()
 		{
@@ -99,13 +101,10 @@ namespace frame
 					double currentTime = glfwGetTime();
 					frame.deltaTime = float(currentTime - frame.lastTime);
 
-					tick(window, *this);
-					dispatcher.trigger(tick_event(frame));
+					dispatcher.trigger(tick_event { frame, this, &registry });
 
 					if (imgui)
 					{
-						tick_gui(window, *this);
-
 						ImGui::Render();
 						ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 					}

@@ -13,19 +13,29 @@
 
 #include <vertices.h>
 
-class test_framework : public frame::framework
-{
-public:
+struct movement {
 	glm::vec3 position = glm::vec3(0, 0, 5);
+	glm::vec3 direction = glm::vec3(0, 0, 0);
+	glm::vec3 right = glm::vec3(0, 0, 0);
+
 	float horizontalAngle = 3.14f;
 	float verticalAngle = 0.0f;
 	float initialFov = 45.0f;
-
 	float speed = 30.0f;
 	float mouseSpeed = 1.5f;
+};
 
+struct input_event {
+	entt::registry *registry;
+	frame::framework *framework;
+};
+
+class test_framework : public frame::framework
+{
+public:
 	std::unique_ptr<buffer::buffer<std::array<float, 9 * 12>>> vertices_buffer;
 	std::unique_ptr<buffer::buffer<std::array<float, 9 * 12>>> color_buffer;
+
 	std::unique_ptr<shader::shader> shader;
 
 	int matrix_id = 0;
@@ -37,38 +47,164 @@ public:
 	}
 
 	struct listener {
-		test_framework &framework;
-
-		void update_gui()
+		void update_gui(const frame::tick_event &event)
 		{
-			framework.gui_frame();
+			imgui::frame();
 
-			ImGuiIO &io = ImGui::GetIO();
-			(void) io;
+			auto registry = event.registry;
+			auto view = registry->view<movement>();
 
-			ImGui::Begin("ogl voxel");
-
-			if (ImGui::TreeNode("Debug"))
+			for (auto [entity, movement] : view.each())
 			{
-				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+				ImGuiIO &io = ImGui::GetIO();
+				(void) io;
 
-				ImGui::Text("horizontalAngle: %f", framework.horizontalAngle);
-				ImGui::SameLine();
-				ImGui::Text("verticalAngle: %f", framework.verticalAngle);
+				ImGui::Begin("ogl voxel");
 
-				ImGui::TreePop();
+				if (ImGui::TreeNode("Debug"))
+				{
+					ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+					ImGui::Text("horizontalAngle: %f", movement.horizontalAngle);
+					ImGui::SameLine();
+					ImGui::Text("verticalAngle: %f", movement.verticalAngle);
+
+					ImGui::TreePop();
+				}
+
+				if (ImGui::TreeNode("Controls"))
+				{
+					ImGui::SliderFloat("speed", &movement.speed, 10.0f, 100.0f);
+					ImGui::SliderFloat("mouseSpeed", &movement.mouseSpeed, 0.5f, 10.0f);
+					ImGui::TreePop();
+				}
+
+				ImGui::End();
+			}
+		}
+
+		void tick(const frame::tick_event &event)
+		{
+			auto registry = event.registry;
+			auto framework = static_cast<test_framework *>(event.data);
+
+			auto entity_view = registry->view<movement>();
+
+			for (auto [entity, move] : entity_view.each())
+			{
+				{
+					float phase = glfwGetTime() * 2.0f * M_PI * 0.2f;
+
+					for (int y = 0; y < 12; y++)
+					{
+						for (int x = 0; x < 9; x++)
+						{
+							float fo = static_cast<float>(x) / (9 - 1);
+							float so = static_cast<float>(y) / (12 - 1);
+
+							float wave = std::sin(fo * 2 * M_PI + phase) * 2.0f;
+							int index = (y * 9 + x) * 3;
+
+							// Map wave value to different color channels
+							colors[index] = (std::sin(wave) + 1.0f) * 0.5f; // Red
+							colors[index + 1] = (std::sin(wave + 2.0f * M_PI / 3.0f) + 1.0f) * 0.5f; // Green
+							colors[index + 2] = (std::sin(wave + 4.0f * M_PI / 3.0f) + 1.0f) * 0.5f; // Blue
+						}
+					}
+				}
+
+				framework->color_buffer->update(&colors);
+
+				glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) 2560 / (float) 1440, 0.1f, 100.0f);
+
+				glm::vec3 direction(
+					cos(move.verticalAngle) * sin(move.horizontalAngle),
+					sin(move.verticalAngle),
+					cos(move.verticalAngle) * cos(move.horizontalAngle));
+
+				glm::vec3 right = glm::vec3(
+					sin(move.horizontalAngle - 3.14f / 2.0f),
+					0,
+					cos(move.horizontalAngle - 3.14f / 2.0f) //
+				);
+
+				glm::vec3 up = glm::cross(right, direction);
+				glm::mat4 view = glm::lookAt(
+					glm::vec3(move.position), // Camera is at (4,3,3), in World Space
+					glm::vec3(move.position + direction), // and looks at the origin
+					glm::vec3(up) // Head is up (set to 0,-1,0 to look upside-down)
+				);
+
+				if (ImGui::GetCurrentContext() == nullptr || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
+				{
+					move.direction = direction;
+					move.right = right;
+
+					framework->dispatcher.trigger(input_event { registry, framework });
+				}
+
+				glm::mat4 model = glm::mat4(1.0f);
+				glm::mat4 mvp = (projection * view * model);
+
+				gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
+
+				framework->shader->bind();
+
+				glUniformMatrix4fv(framework->matrix_id, 1, false, &mvp[0][0]);
+
+				framework->vertices_buffer->bind_vertex(0, 3);
+				framework->color_buffer->bind_vertex(1, 3);
+
+				gfx::draw_arrays(0, 12 * 3);
+			}
+		}
+
+		void input(const input_event &event)
+		{
+			auto registry = event.registry;
+			auto entity_view = registry->view<movement>();
+
+			auto framework = static_cast<test_framework *>(event.framework);
+
+			auto [width, height] = framework->context->size();
+			auto [xpos, ypos] = framework->context->get_mouse_pos();
+
+			framework->context->reset_mouse();
+
+			float mouseDeltaX = static_cast<float>(width / 2.0 - xpos);
+			float mouseDeltaY = static_cast<float>(height / 2.0 - ypos);
+
+			if (framework->is_pressed(input::key::esc))
+			{
+				ImGui::SetWindowFocus();
 			}
 
-			if (ImGui::TreeNode("Controls"))
+			for (auto [entity, move] : entity_view.each())
 			{
-				ImGui::SliderFloat("speed", &framework.speed, 10.0f, 100.0f);
-				ImGui::SliderFloat("mouseSpeed", &framework.mouseSpeed, 0.5f, 10.0f);
-				ImGui::TreePop();
-			}
+				move.horizontalAngle += move.mouseSpeed * framework->frame.deltaTime * mouseDeltaX;
+				move.verticalAngle += move.mouseSpeed * framework->frame.deltaTime * mouseDeltaY;
 
-			ImGui::End();
+				std::map<input::key, glm::vec3> keyToDirection {
+					{ input::key::w, move.direction },
+					{ input::key::a, -move.right },
+					{ input::key::s, -move.direction },
+					{ input::key::d, move.right },
+					{ input::key::spacebar, glm::vec3(0.0f, 1.0f, 0.0f) }, // Up
+					{ input::key::shift, glm::vec3(0.0f, -1.0f, 0.0f) }	// Down
+				};
+
+				// Iterate over the input keys and perform the movement
+				for (const auto &entry : keyToDirection)
+				{
+					if (framework->is_pressed(entry.first))
+					{
+						move.position += entry.second * move.speed * framework->frame.deltaTime;
+					}
+				}
+			}
 		}
 	};
+
 	void initialize() override
 	{
 		this->registry = entt::basic_registry();
@@ -92,109 +228,17 @@ public:
 
 		this->matrix_id = shader->get_uniform_location("mvp");
 
-		listener listener { *this };
+		registry.emplace<movement>(registry.create());
+
+		listener listener;
+
 		dispatcher.sink<frame::tick_event>().connect<&listener::update_gui>(listener);
-	}
-
-	void tick_gui(GLFWwindow *window, framework &framework) override
-	{
-	}
-
-	void tick(GLFWwindow *window, framework &framework) override
-	{
-		{
-			float phase = glfwGetTime() * 2.0f * M_PI * 0.2f;
-
-			for (int y = 0; y < 12; y++)
-			{
-				for (int x = 0; x < 9; x++)
-				{
-					float fo = static_cast<float>(x) / (9 - 1);
-					float so = static_cast<float>(y) / (12 - 1);
-
-					float wave = std::sin(fo * 2 * M_PI + phase) * 2.0f;
-					int index = (y * 9 + x) * 3;
-
-					// Map wave value to different color channels
-					colors[index] = (std::sin(wave) + 1.0f) * 0.5f; // Red
-					colors[index + 1] = (std::sin(wave + 2.0f * M_PI / 3.0f) + 1.0f) * 0.5f; // Green
-					colors[index + 2] = (std::sin(wave + 4.0f * M_PI / 3.0f) + 1.0f) * 0.5f; // Blue
-				}
-			}
-		}
-
-		color_buffer->update(&colors);
-
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) context->width() / (float) context->height(), 0.1f, 100.0f);
-
-		glm::vec3 direction(
-			cos(verticalAngle) * sin(horizontalAngle),
-			sin(verticalAngle),
-			cos(verticalAngle) * cos(horizontalAngle));
-
-		glm::vec3 right = glm::vec3(
-			sin(horizontalAngle - 3.14f / 2.0f),
-			0,
-			cos(horizontalAngle - 3.14f / 2.0f) //
-		);
-
-		glm::vec3 up = glm::cross(right, direction);
-		glm::mat4 view = glm::lookAt(
-			glm::vec3(position), // Camera is at (4,3,3), in World Space
-			glm::vec3(position + direction), // and looks at the origin
-			glm::vec3(up) // Head is up (set to 0,-1,0 to look upside-down)
-		);
-
-		if (ImGui::GetCurrentContext() == nullptr || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
-		{
-			this->handle_input(&direction, &right);
-		}
-
-		glm::mat4 model = glm::mat4(1.0f);
-		glm::mat4 mvp = (projection * view * model);
-
-		gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
-
-		shader->bind();
-
-		glUniformMatrix4fv(matrix_id, 1, false, &mvp[0][0]);
-
-		vertices_buffer->bind_vertex(0, 3);
-		color_buffer->bind_vertex(1, 3);
-
-		gfx::draw_arrays(0, 12 * 3);
+		dispatcher.sink<frame::tick_event>().connect<&listener::tick>(listener);
+		dispatcher.sink<input_event>().connect<&listener::input>(listener);
 	}
 
 	void handle_input(const glm::vec3 *direction, const glm::vec3 *right)
 	{
-		auto [width, height] = context->size();
-		auto [xpos, ypos] = context->get_mouse_pos();
-
-		context->reset_mouse();
-
-		float mouseDeltaX = static_cast<float>(width / 2.0 - xpos);
-		float mouseDeltaY = static_cast<float>(height / 2.0 - ypos);
-
-		horizontalAngle += mouseSpeed * frame.deltaTime * mouseDeltaX;
-		verticalAngle += mouseSpeed * frame.deltaTime * mouseDeltaY;
-
-		std::map<input::key, glm::vec3> keyToDirection {
-			{ input::key::w, *direction },
-			{ input::key::a, -*right },
-			{ input::key::s, -*direction },
-			{ input::key::d, *right },
-			{ input::key::spacebar, glm::vec3(0.0f, 1.0f, 0.0f) }, // Up
-			{ input::key::shift, glm::vec3(0.0f, -1.0f, 0.0f) }	// Down
-		};
-
-		// Iterate over the input keys and perform the movement
-		for (const auto &entry : keyToDirection)
-		{
-			if (this->is_pressed(entry.first))
-			{
-				position += entry.second * speed * frame.deltaTime;
-			}
-		}
 	}
 };
 

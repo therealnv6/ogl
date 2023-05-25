@@ -1,3 +1,6 @@
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include <render.hpp>
 
 namespace gfx
@@ -47,5 +50,27 @@ namespace gfx
 	void draw_arrays(int attributeIndex, int count)
 	{
 		glDrawArrays(GL_TRIANGLES, 0, count);
+	}
+}
+
+namespace imgui
+{
+	void frame()
+	{
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+
+		ImGui::NewFrame();
+
+		ImGuiIO &io = ImGui::GetIO();
+		(void) io;
+
+		if (ImGui::GetCurrentContext() == nullptr || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
+		{
+			if (io.MouseDrawCursor)
+			{
+				io.MouseDrawCursor = false;
+			}
+		}
 	}
 }

@@ -33,3 +33,8 @@ namespace gfx
 	void vertex_attribute(int attributeIndex, int size, void *offset);
 	void draw_arrays(int attributeIndex, int count);
 }
+
+namespace imgui
+{
+	void frame();
+}

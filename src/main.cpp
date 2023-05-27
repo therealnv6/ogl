@@ -13,6 +13,7 @@
 #include <shader.hpp>
 #include <spdlog/spdlog.h>
 #include <vertices.h>
+#include <voxel.hpp>
 #include <window.hpp>
 
 const static float MOVEMENT_SPEED = 30.0f;
@@ -59,12 +60,17 @@ public:
 				ImGuiIO &io = ImGui::GetIO();
 				(void) io;
 
+				frame::frame_history history = event.data->frame.frameHistory;
+				float *frame_history = history.frames.data();
+				int *size = &history.max_frames;
+
 				ImGui::Begin("ogl voxel");
 
-				if (ImGui::BeginTabBar("whale"))
+				if (ImGui::BeginTabBar(""))
 				{
 					if (ImGui::BeginTabItem("Debug"))
 					{
+						ImGui::PlotLines("", frame_history, *size);
 						ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
 						ImGui::Text("horizontalAngle: %f", movement.horizontalAngle);
@@ -78,6 +84,8 @@ public:
 					if (ImGui::BeginTabItem("Controls"))
 					{
 						ImGui::EndTabItem();
+						ImGui::SliderInt("Maximum Frames Cached", &event.data->frame.frameHistory.max_frames, 1, 100000);
+						event.data->frame.frameHistory.resize();
 					}
 
 					ImGui::EndTabBar();
@@ -94,28 +102,20 @@ public:
 
 			auto entity_view = registry->view<movement>();
 
+			auto camera_entity = registry->view<gfx::camera>().front();
+			auto camera = registry->get<gfx::camera>(camera_entity);
+
+			auto world_entity = registry->view<voxel::world>().front();
+			auto world = registry->get<voxel::world>(world_entity);
+
 			for (auto [entity, move] : entity_view.each())
 			{
-				{
-					float phase = glfwGetTime() * 2.0f * M_PI * 0.2f;
-
-					for (int y = 0; y < 12; y++)
-					{
-						for (int x = 0; x < 9; x++)
-						{
-							float fo = static_cast<float>(x) / (9 - 1);
-							float so = static_cast<float>(y) / (12 - 1);
-
-							float wave = std::sin(fo * 2 * M_PI + phase) * 2.0f;
-							int index = (y * 9 + x) * 3;
-
-							// Map wave value to different color channels
-							colors[index] = (std::sin(wave) + 1.0f) * 0.5f; // Red
-							colors[index + 1] = (std::sin(wave + 2.0f * M_PI / 3.0f) + 1.0f) * 0.5f; // Green
-							colors[index + 2] = (std::sin(wave + 4.0f * M_PI / 3.0f) + 1.0f) * 0.5f; // Blue
-						}
-					}
-				}
+				world.render([](glm::vec3 position, glm::vec3 color) {
+					// todo: implement voxel rendering here
+				},
+					glm::vec3(0.0, 0.0, 0.0), // todo: camera position
+					glm::vec3(0.0, 0.0, 0.0) // todo: camera direction
+				);
 
 				framework->color_buffer->update(&colors);
 
@@ -150,7 +150,9 @@ public:
 
 				if (ImGui::GetCurrentContext() == nullptr || !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
 				{
-					framework->dispatcher.trigger(poll_input_event { registry, framework });
+					framework->dispatcher.trigger(
+						poll_input_event { registry, framework } // we could probably make a single poll_input_event instead of making a new one.
+					);
 				}
 
 				glm::mat4 model = glm::mat4(1.0f);
@@ -241,6 +243,7 @@ public:
 
 		registry.emplace<gfx::camera>(registry.create());
 		registry.emplace<movement>(registry.create());
+		registry.emplace<voxel::world>(registry.create(), glm::vec3(1, 1, 1), glm::vec3(40, 20, 40));
 
 		listener listener;
 

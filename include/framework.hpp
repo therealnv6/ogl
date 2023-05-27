@@ -11,11 +11,81 @@
 
 namespace frame
 {
+	class frame_history
+	{
+	private:
+		int frontIndex; // Index of the front element
+		int backIndex; // Index of the back element
+		int count; // Current number of frames in the history
+
+	public:
+		std::vector<float> frames;
+		int max_frames = 1000;
+
+		frame_history()
+			: frontIndex(0)
+			, backIndex(0)
+			, count(0)
+		{
+			frames.resize(max_frames);
+			// Initialize the frames array with zeros
+			for (int i = 0; i < frames.size(); i++)
+			{
+				frames[i] = 0;
+			}
+		}
+
+		void push(float frame)
+		{
+			// If the history is full, move the front index to the next element
+			if (count == frames.size())
+			{
+				frontIndex = (frontIndex + 1) % frames.size();
+			}
+			else
+			{
+				count++;
+			}
+
+			// Add the new frame to the back index
+			frames[backIndex] = frame;
+
+			// Move the back index to the next element
+			backIndex = (backIndex + 1) % frames.size();
+		}
+
+		void pop()
+		{
+			if (count > 0)
+			{
+				// Move the front index to the next element
+				frontIndex = (frontIndex + 1) % frames.size();
+				count--;
+			}
+		}
+
+		void resize()
+		{
+			if (max_frames == this->frames.size())
+			{
+				return;
+			}
+
+			this->frames.clear();
+			this->frames.resize(max_frames);
+
+			this->frontIndex = 0;
+			this->backIndex = 0;
+			this->count = 0;
+		}
+	};
+
 	class framework;
 
 	struct time {
 		float lastTime;
 		float deltaTime;
+		frame_history frameHistory;
 	};
 
 	struct tick_event {
@@ -105,6 +175,13 @@ namespace frame
 
 					if (imgui)
 					{
+						ImGuiIO &io = ImGui::GetIO();
+						(void) io;
+
+						// for diagnostics
+
+						frame.frameHistory.push(io.Framerate);
+
 						ImGui::Render();
 						ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 					}

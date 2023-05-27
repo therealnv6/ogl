@@ -26,39 +26,29 @@ namespace frame
 			: frontIndex(0)
 			, backIndex(0)
 			, count(0)
+			, frames(1000, 0.0f)
 		{
-			frames.resize(max_frames);
-			// Initialize the frames array with zeros
-			for (int i = 0; i < frames.size(); i++)
-			{
-				frames[i] = 0;
-			}
 		}
 
 		void push(float frame)
 		{
-			// If the history is full, move the front index to the next element
-			if (count == frames.size())
+			frames[backIndex] = frame;
+			backIndex = (backIndex + 1) % max_frames;
+
+			if (count == max_frames)
 			{
-				frontIndex = (frontIndex + 1) % frames.size();
+				frontIndex = (frontIndex + 1) % max_frames;
 			}
 			else
 			{
 				count++;
 			}
-
-			// Add the new frame to the back index
-			frames[backIndex] = frame;
-
-			// Move the back index to the next element
-			backIndex = (backIndex + 1) % frames.size();
 		}
 
 		void pop()
 		{
 			if (count > 0)
 			{
-				// Move the front index to the next element
 				frontIndex = (frontIndex + 1) % frames.size();
 				count--;
 			}
@@ -71,12 +61,21 @@ namespace frame
 				return;
 			}
 
-			this->frames.clear();
-			this->frames.resize(max_frames);
+			int new_max_frames = max_frames;
+			std::vector<float> new_frames(new_max_frames, 0.0f);
 
-			this->frontIndex = 0;
-			this->backIndex = 0;
-			this->count = 0;
+			int num_frames = std::min(count, new_max_frames);
+			for (int i = 0; i < num_frames; i++)
+			{
+				new_frames[i] = frames[(frontIndex + i) % max_frames];
+			}
+
+			frames = new_frames;
+			frontIndex = 0;
+			backIndex = num_frames;
+			count = num_frames;
+
+			max_frames = new_max_frames;
 		}
 	};
 

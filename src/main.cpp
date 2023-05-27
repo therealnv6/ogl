@@ -73,9 +73,9 @@ public:
 						ImGui::PlotLines("", frame_history, *size);
 						ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
-						ImGui::Text("horizontalAngle: %f", movement.horizontalAngle);
+						ImGui::Text("horizontalAngle: %.3f", movement.horizontalAngle);
 						ImGui::SameLine();
-						ImGui::Text("verticalAngle: %f", movement.verticalAngle);
+						ImGui::Text("verticalAngle: %.3f", movement.verticalAngle);
 						ImGui::Text("x: %f, y: %f, z: %f", movement.position.x, movement.position.y, movement.position.z);
 
 						ImGui::EndTabItem();
@@ -100,34 +100,17 @@ public:
 			auto registry = event.registry;
 			auto framework = static_cast<test_framework *>(event.data);
 
-			auto entity_view = registry->view<movement>();
-
 			auto camera_entity = registry->view<gfx::camera>().front();
 			auto camera = registry->get<gfx::camera>(camera_entity);
 
-			auto world_entity = registry->view<voxel::world>().front();
-			auto world = registry->get<voxel::world>(world_entity);
+			gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
 
-			for (auto [entity, move] : entity_view.each())
-			{
-				world.render([](glm::vec3 position, glm::vec3 color) {
-					// todo: implement voxel rendering here
-				},
-					glm::vec3(0.0, 0.0, 0.0), // todo: camera position
-					glm::vec3(0.0, 0.0, 0.0) // todo: camera direction
-				);
+			framework->shader->bind();
 
-				framework->color_buffer->update(&colors);
+			framework->vertices_buffer->bind_vertex(0, 3);
+			framework->color_buffer->bind_vertex(1, 3);
 
-				gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
-
-				framework->shader->bind();
-
-				framework->vertices_buffer->bind_vertex(0, 3);
-				framework->color_buffer->bind_vertex(1, 3);
-
-				gfx::draw_arrays(0, 12 * 3);
-			}
+			gfx::draw_arrays(0, 12 * 3);
 		}
 
 		void update_camera(const frame::tick_event &event)

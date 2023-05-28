@@ -13,7 +13,6 @@
 #include <shader.hpp>
 #include <spdlog/spdlog.h>
 #include <vertices.h>
-#include <voxel.hpp>
 #include <window.hpp>
 
 const static float MOVEMENT_SPEED = 30.0f;
@@ -34,8 +33,8 @@ struct poll_input_event {
 class test_framework : public frame::framework
 {
 public:
-	std::unique_ptr<buffer::buffer<std::array<float, 9 * 12>>> vertices_buffer;
-	std::unique_ptr<buffer::buffer<std::array<float, 9 * 12>>> color_buffer;
+	std::unique_ptr<buffer::buffer> vertices_buffer;
+	std::unique_ptr<buffer::buffer> color_buffer;
 
 	std::unique_ptr<shader::shader> shader;
 
@@ -217,8 +216,8 @@ public:
 		// this must be called first before making the buffer
 		buffer::reserve_vertex_array(1);
 
-		this->vertices_buffer = std::make_unique<buffer::buffer<std::array<float, 9 * 12>>>(&data, sizeof(std::array<float, 9 * 12>), buffer::draw_type::Static);
-		this->color_buffer = std::make_unique<buffer::buffer<std::array<float, 9 * 12>>>(&colors, sizeof(std::array<float, 9 * 12>), buffer::draw_type::Stream);
+		this->vertices_buffer = std::make_unique<buffer::buffer>(&data, sizeof(std::array<float, 9 * 12>), buffer::draw_type::Static);
+		this->color_buffer = std::make_unique<buffer::buffer>(&colors, sizeof(std::array<float, 9 * 12>), buffer::draw_type::Stream);
 
 		this->shader = std::make_unique<shader::shader>("shaders/simple.vert", "shaders/simple.frag");
 
@@ -226,7 +225,6 @@ public:
 
 		registry.emplace<gfx::camera>(registry.create());
 		registry.emplace<movement>(registry.create());
-		registry.emplace<voxel::world>(registry.create(), glm::vec3(1, 1, 1), glm::vec3(40, 20, 40));
 
 		listener listener;
 

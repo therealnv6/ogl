@@ -1,5 +1,6 @@
 #pragma once
 #include <GL/glew.h>
+#include <functional>
 #include <render.hpp>
 
 namespace buffer
@@ -11,35 +12,41 @@ namespace buffer
 		Stream = GL_STREAM_DRAW
 	};
 
-	template<typename T>
 	class buffer
 	{
 	public:
-		buffer(T *data, int size, draw_type type)
+		buffer(void *data, int size, draw_type type)
 			: type { type }
 			, size { size }
 		{
 			glGenBuffers(1, &buffer_id);
-			glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-			glBufferData(GL_ARRAY_BUFFER, size, reinterpret_cast<const void *>(data), static_cast<int>(type));
+
+			this->bind([&]() {
+				glBufferData(GL_ARRAY_BUFFER, size, data, static_cast<int>(type));
+			});
 		}
 
-		void update(T *data)
+		void update(void *data)
 		{
-			glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, size, reinterpret_cast<const void *>(data));
+			this->bind([&]() {
+				glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
+			});
 		}
 
-		void bind()
+		void bind(std::function<void()> callback)
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
+			callback();
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
 		}
 
 		void bind_vertex(int attribute_pos, int size, void *offset = nullptr)
 		{
 			gfx::enable_vertex(attribute_pos);
-			this->bind();
-			gfx::vertex_attribute(attribute_pos, size, offset);
+
+			this->bind([&]() {
+				gfx::vertex_attribute(attribute_pos, size, offset);
+			});
 		}
 
 	private:

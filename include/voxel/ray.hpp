@@ -7,6 +7,7 @@
 namespace ray
 {
 	struct raycast final {
+	public:
 		[[nodiscard]] constexpr raycast(glm::vec3 origin, glm::vec3 direction)
 			: origin(origin)
 			, direction(direction)
@@ -14,17 +15,17 @@ namespace ray
 			spdlog::debug("created new ray");
 		};
 
-		[[nodiscard]] glm::vec3 point_at(float param)
+		[[nodiscard]] glm::vec3 point_at(float param) const
 		{
 			return origin + (direction * param);
 		}
 
-		[[nodiscard]] glm::vec3 get_origin()
+		[[nodiscard]] glm::vec3 get_origin() const
 		{
 			return origin;
 		}
 
-		[[nodiscard]] glm::vec3 get_direction()
+		[[nodiscard]] glm::vec3 get_direction() const
 		{
 			return direction;
 		}

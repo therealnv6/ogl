@@ -5,14 +5,10 @@
 
 namespace ray
 {
-	struct voxel_data {
-		glm::vec3 color;
-		glm::vec3 position;
-	};
-
-	std::vector<voxel_data> trace_rays(
+	template<int X, int Y, int Z>
+	voxel::voxel_data *trace_rays(
 		const ray::raycast &ray,
-		const voxel::grid &grid,
-		glm::vec2 bounds // bounds.second has to be >= 1.0 and bounds.first has to be < bounds.second
-	);
+		const voxel::grid<X, Y, Z> &grid,
+		glm::vec3 deltas,
+		glm::vec3 steps);
 }

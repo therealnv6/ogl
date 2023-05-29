@@ -21,7 +21,7 @@ const static float MOUSE_SPEED = 1.5f;
 struct movement {
 	glm::vec3 position = glm::vec3(0, 0, 5);
 
-	float horizontalAngle = 3.14f;
+	float horizontalAngle = 0.0f;
 	float verticalAngle = 0.0f;
 };
 
@@ -156,6 +156,14 @@ public:
 				return; // we don't want to handle any of the other input (e.g. resetting the mouse)
 			}
 
+			static double i = 0.0;
+
+			if (i < 1.0)
+			{
+				i += 0.1;
+				return;
+			}
+
 			auto [width, height] = framework->context->size();
 			auto [xpos, ypos] = framework->context->get_mouse_pos();
 
@@ -179,11 +187,17 @@ public:
 					cos(move.verticalAngle) * cos(move.horizontalAngle) //
 				);
 
+				glm::vec3 right = glm::vec3(
+					sin(move.horizontalAngle - 3.14f / 2.0f),
+					0,
+					cos(move.horizontalAngle - 3.14f / 2.0f) //
+				);
+
 				std::map<input::key, glm::vec3> keyToDirection {
 					{ input::key::w, -direction },
-					{ input::key::a, -camera.forward() },
+					{ input::key::a, right },
 					{ input::key::s, direction },
-					{ input::key::d, camera.forward() },
+					{ input::key::d, -right },
 					{ input::key::spacebar, glm::vec3(0.0f, 1.0f, 0.0f) }, // Up
 					{ input::key::shift, glm::vec3(0.0f, -1.0f, 0.0f) }	// Down
 				};

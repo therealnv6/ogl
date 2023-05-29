@@ -49,7 +49,7 @@ public:
 	struct listener {
 		void update_gui(const frame::tick_event &event)
 		{
-			imgui::frame();
+			event.data->gui_frame();
 
 			auto registry = event.registry;
 			auto view = registry->view<movement>();
@@ -153,7 +153,6 @@ public:
 
 			if (framework->is_pressed(input::key::esc))
 			{
-				ImGui::SetWindowFocus();
 				return; // we don't want to handle any of the other input (e.g. resetting the mouse)
 			}
 
@@ -206,7 +205,7 @@ public:
 		this->init_gui();
 
 		context->input_mode(input::input_mode::StickyKeys, true);
-		context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_HIDDEN);
+		context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_DISABLED);
 
 		gfx::enable(gfx::enable_fields::CullFace);
 		gfx::depth(gfx::depth_function::Less);

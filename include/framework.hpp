@@ -149,12 +149,13 @@ namespace frame
 				if (io.MouseDrawCursor)
 				{
 					io.MouseDrawCursor = false;
-					context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_HIDDEN);
+					context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_DISABLED);
 				}
 			}
 
 			if (this->is_pressed(input::key::esc))
 			{
+				context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_HIDDEN);
 				ImGui::SetWindowFocus();
 				io.MouseDrawCursor = true;
 			}

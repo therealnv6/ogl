@@ -38,8 +38,6 @@ public:
 
 	std::unique_ptr<shader::shader> shader;
 
-	int matrix_id = 0;
-
 	test_framework(gfx::context *context)
 		: frame::framework(context)
 	{
@@ -140,7 +138,7 @@ public:
 				glm::mat4 model = glm::mat4(1.0f);
 				glm::mat4 mvp = (projection * view * model);
 
-				glUniformMatrix4fv(framework->matrix_id, 1, false, &mvp[0][0]);
+				framework->shader->bind_mat4("mvp", mvp, false);
 			}
 		}
 
@@ -218,23 +216,28 @@ public:
 	{
 		this->init_gui();
 
-		context->input_mode(input::input_mode::StickyKeys, true);
-		context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_DISABLED);
+		{
+			context->input_mode(input::input_mode::StickyKeys, true);
+			context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_DISABLED);
+		}
 
-		gfx::enable(gfx::enable_fields::CullFace);
-		gfx::depth(gfx::depth_function::Less);
+		{
+			gfx::enable(gfx::enable_fields::CullFace);
+			gfx::depth(gfx::depth_function::Less);
 
-		gfx::clear_color({ 0.0, 0.1, 0.2, 0.0 });
+			gfx::clear_color({ 0.0, 0.1, 0.2, 0.0 });
+		}
 
-		// this must be called first before making the buffer
-		buffer::reserve_vertex_array(1);
+		{
+			buffer::reserve_vertex_array(1);
 
-		this->vertices_buffer = std::make_unique<buffer::buffer>(&data, sizeof(std::array<float, 9 * 12>), buffer::draw_type::Static);
-		this->color_buffer = std::make_unique<buffer::buffer>(&colors, sizeof(std::array<float, 9 * 12>), buffer::draw_type::Stream);
+			int size = sizeof(std::array<float, 9 * 12>);
 
-		this->shader = std::make_unique<shader::shader>("shaders/simple.vert", "shaders/simple.frag");
+			vertices_buffer = std::make_unique<buffer::buffer>(&data, size, buffer::draw_type::Static);
+			color_buffer = std::make_unique<buffer::buffer>(&colors, size, buffer::draw_type::Static);
+		}
 
-		this->matrix_id = shader->get_uniform_location("mvp");
+		shader = std::make_unique<shader::shader>("shaders/simple.vert", "shaders/simple.frag");
 
 		registry.emplace<gfx::camera>(registry.create());
 		registry.emplace<movement>(registry.create());

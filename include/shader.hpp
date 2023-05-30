@@ -1,7 +1,11 @@
 #pragma once
 #include <GL/glew.h>
+#include <format>
 #include <fstream>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -37,7 +41,20 @@ namespace shader
 
 		GLuint get_uniform_location(const char *name)
 		{
+			if (this->uniform_map.contains(name))
+			{
+				return uniform_map[name];
+			}
+
 			return glGetUniformLocation(id, name);
+		}
+
+		void bind_mat4(const char *name, const glm::mat4 &matrix, bool transpose)
+		{
+			auto location = get_uniform_location(name);
+			auto ptr = glm::value_ptr(matrix);
+
+			glUniformMatrix4fv(location, 1, transpose, ptr);
 		}
 
 		void bind()
@@ -52,6 +69,7 @@ namespace shader
 
 	private:
 		GLuint id;
+		std::map<const char *, GLuint> uniform_map;
 
 		void compile(const char *file_path, ShaderType type)
 		{
@@ -88,8 +106,9 @@ namespace shader
 			{
 				std::vector<char> error_msg(info_length + 1);
 				glGetShaderInfoLog(shader_id, info_length, NULL, &error_msg[0]);
-				std::cout << "Shader compilation error: " << &error_msg[0] << std::endl;
-				return;
+				throw std::runtime_error(
+					std::format("shader compilation error {}", &error_msg[0]) // ugly, but deal with it.
+				);
 			}
 
 			glAttachShader(id, shader_id);

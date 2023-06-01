@@ -1,6 +1,7 @@
 #pragma once
 #include <GL/glew.h>
 #include <functional>
+#include <memory>
 #include <render.hpp>
 
 namespace buffer
@@ -54,6 +55,8 @@ namespace buffer
 		draw_type type;
 		int size;
 	};
+
+	typedef std::unique_ptr<buffer> unique_buffer;
 
 	GLuint reserve_vertex_array(GLuint index = 1);
 }

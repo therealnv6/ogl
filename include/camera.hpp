@@ -9,24 +9,29 @@ namespace gfx
 	class camera
 	{
 	public:
-		glm::mat4 get_view_matrix() const
+		[[nodiscard]] glm::mat4 get_view_matrix() const
 		{
 			return glm::lookAt(position, position + direction, up);
 		}
 
-		glm::mat4 get_projection(float aspect_ratio) const
+		[[nodiscard]] glm::mat4 get_projection(float aspect_ratio) const
 		{
-			return glm::perspective(glm::radians(45.0f), aspect_ratio, 0.1f, 100.0f);
+			return glm::perspective(glm::radians(45.0f), aspect_ratio, 0.1f, 100000.0f);
 		}
 
-		glm::vec3 get_direction() const
+		[[nodiscard]] glm::vec3 get_direction() const
 		{
 			return direction;
 		}
 
-		glm::vec3 forward()
+		[[nodiscard]] glm::vec3 forward()
 		{
 			return glm::cross(direction, up);
+		}
+
+		[[nodiscard]] glm::vec3 get_up() const
+		{
+			return up;
 		}
 
 		void move(glm::vec3 position)

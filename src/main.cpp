@@ -18,6 +18,9 @@
 const static float MOVEMENT_SPEED = 30.0f;
 const static float MOUSE_SPEED = 1.5f;
 
+#define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
+#define GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX 0x9049
+
 struct movement {
 	glm::vec3 position = glm::vec3(0, 0, 5);
 
@@ -33,8 +36,8 @@ struct poll_input_event {
 class test_framework : public frame::framework
 {
 public:
-	std::unique_ptr<buffer::buffer> vertices_buffer;
-	std::unique_ptr<buffer::buffer> color_buffer;
+	buffer::unique_buffer vertices_buffer;
+	buffer::unique_buffer color_buffer;
 
 	std::unique_ptr<shader::shader> shader;
 
@@ -61,6 +64,17 @@ public:
 				float *frame_history = history.frames.data();
 				int *size = &history.max_frames;
 
+				GLint total_mem_kb = 0;
+				glGetIntegerv(GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX,
+					&total_mem_kb);
+
+				GLint cur_avail_mem_kb = 0;
+				glGetIntegerv(GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX,
+					&cur_avail_mem_kb);
+
+				float total_mem_mb = static_cast<float>(total_mem_kb) / 1024.0f;
+				float cur_avail_mem_mb = static_cast<float>(cur_avail_mem_kb) / 1024.0f;
+
 				ImGui::Begin("ogl voxel");
 
 				if (ImGui::BeginTabBar(""))
@@ -69,11 +83,14 @@ public:
 					{
 						ImGui::PlotLines("", frame_history, *size);
 						ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-
+						ImGui::Text("Memory usage %.2f/%.2f MB", total_mem_mb - cur_avail_mem_mb, total_mem_mb);
 						ImGui::Text("horizontalAngle: %.3f", movement.horizontalAngle);
 						ImGui::SameLine();
 						ImGui::Text("verticalAngle: %.3f", movement.verticalAngle);
-						ImGui::Text("x: %f, y: %f, z: %f", movement.position.x, movement.position.y, movement.position.z);
+
+						ImGui::InputFloat("= x", &movement.position.x);
+						ImGui::InputFloat("= y", &movement.position.y);
+						ImGui::InputFloat("= z", &movement.position.z);
 
 						ImGui::EndTabItem();
 					}
@@ -178,29 +195,22 @@ public:
 				move.horizontalAngle += MOUSE_SPEED * framework->frame.deltaTime * mouseDeltaX;
 				move.verticalAngle += MOUSE_SPEED * framework->frame.deltaTime * mouseDeltaY;
 
+				camera.rotate(move.horizontalAngle, -move.verticalAngle);
+
 				// yikes (should change this sometime)
-				glm::vec3 direction(
-					cos(move.verticalAngle) * sin(move.horizontalAngle),
-					sin(move.verticalAngle),
-					cos(move.verticalAngle) * cos(move.horizontalAngle) //
-				);
+				glm::vec3 direction = camera.get_direction();
+				glm::vec3 right = glm::normalize(glm::cross(direction, camera.get_up()));
 
-				glm::vec3 right = glm::vec3(
-					sin(move.horizontalAngle - 3.14f / 2.0f),
-					0,
-					cos(move.horizontalAngle - 3.14f / 2.0f) //
-				);
-
+				// Define the key-to-direction mapping
 				std::map<input::key, glm::vec3> keyToDirection {
-					{ input::key::w, -direction },
-					{ input::key::a, right },
-					{ input::key::s, direction },
-					{ input::key::d, -right },
+					{ input::key::w, direction }, // Forwards
+					{ input::key::a, -right }, // Left
+					{ input::key::s, -direction }, // Backwards
+					{ input::key::d, right }, // Right
 					{ input::key::spacebar, glm::vec3(0.0f, 1.0f, 0.0f) }, // Up
 					{ input::key::shift, glm::vec3(0.0f, -1.0f, 0.0f) }	// Down
 				};
 
-				// Iterate over the input keys and perform the movement
 				for (const auto &entry : keyToDirection)
 				{
 					if (framework->is_pressed(entry.first))
@@ -215,7 +225,6 @@ public:
 	void initialize() override
 	{
 		this->init_gui();
-
 		{
 			context->input_mode(input::input_mode::StickyKeys, true);
 			context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_DISABLED);
@@ -226,15 +235,13 @@ public:
 			gfx::depth(gfx::depth_function::Less);
 
 			gfx::clear_color({ 0.0, 0.1, 0.2, 0.0 });
+
+			buffer::reserve_vertex_array(1);
 		}
 
 		{
-			buffer::reserve_vertex_array(1);
-
-			int size = sizeof(std::array<float, 9 * 12>);
-
-			vertices_buffer = std::make_unique<buffer::buffer>(&data, size, buffer::draw_type::Static);
-			color_buffer = std::make_unique<buffer::buffer>(&colors, size, buffer::draw_type::Static);
+			vertices_buffer = std::make_unique<buffer::buffer>(&data, sizeof(data), buffer::draw_type::Static);
+			color_buffer = std::make_unique<buffer::buffer>(&colors, sizeof(colors), buffer::draw_type::Static);
 		}
 
 		shader = std::make_unique<shader::shader>("shaders/simple.vert", "shaders/simple.frag");

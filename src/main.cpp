@@ -9,6 +9,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include <imgui.h>
+#include <info.hpp>
 #include <render.hpp>
 #include <shader.hpp>
 #include <spdlog/spdlog.h>
@@ -17,9 +18,6 @@
 
 const static float MOVEMENT_SPEED = 30.0f;
 const static float MOUSE_SPEED = 1.5f;
-
-#define GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX 0x9048
-#define GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX 0x9049
 
 struct movement {
 	glm::vec3 position = glm::vec3(0, 0, 5);
@@ -55,25 +53,16 @@ public:
 			auto registry = event.registry;
 			auto view = registry->view<movement>();
 
+			frame::frame_history history = event.data->frame.frameHistory;
+
 			for (auto [entity, movement] : view.each())
 			{
 				ImGuiIO &io = ImGui::GetIO();
 				(void) io;
 
-				frame::frame_history history = event.data->frame.frameHistory;
-				float *frame_history = history.frames.data();
-				int *size = &history.max_frames;
-
-				GLint total_mem_kb = 0;
-				glGetIntegerv(GL_GPU_MEM_INFO_TOTAL_AVAILABLE_MEM_NVX,
-					&total_mem_kb);
-
-				GLint cur_avail_mem_kb = 0;
-				glGetIntegerv(GL_GPU_MEM_INFO_CURRENT_AVAILABLE_MEM_NVX,
-					&cur_avail_mem_kb);
-
-				float total_mem_mb = static_cast<float>(total_mem_kb) / 1024.0f;
-				float cur_avail_mem_mb = static_cast<float>(cur_avail_mem_kb) / 1024.0f;
+				float total_mem_gb = info::get_memory(memory_type::available_memory, memory_scale::gigabytes);
+				float total_mem_mb = info::get_memory(memory_type::available_memory, memory_scale::megabytes);
+				float cur_avail_mem_mb = info::get_memory(memory_type::free_space, memory_scale::megabytes);
 
 				ImGui::Begin("ogl voxel");
 
@@ -81,9 +70,9 @@ public:
 				{
 					if (ImGui::BeginTabItem("Debug"))
 					{
-						ImGui::PlotLines("", frame_history, *size);
+						ImGui::PlotLines("", history.frames.data(), history.max_frames);
 						ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-						ImGui::Text("Memory usage %.2f/%.2f MB", total_mem_mb - cur_avail_mem_mb, total_mem_mb);
+						ImGui::Text("Memory usage %.2f/%.3f MB", total_mem_mb - cur_avail_mem_mb, total_mem_gb);
 						ImGui::Text("horizontalAngle: %.3f", movement.horizontalAngle);
 						ImGui::SameLine();
 						ImGui::Text("verticalAngle: %.3f", movement.verticalAngle);
@@ -97,9 +86,6 @@ public:
 
 					if (ImGui::BeginTabItem("Controls"))
 					{
-						ImGui::EndTabItem();
-						ImGui::SliderInt("Maximum Frames Cached", &event.data->frame.frameHistory.max_frames, 1, 100000);
-						event.data->frame.frameHistory.resize();
 					}
 
 					ImGui::EndTabBar();
@@ -173,7 +159,7 @@ public:
 
 			static double i = 0.0;
 
-			if (i < 1.0)
+			if (i < 0.5)
 			{
 				i += 0.1;
 				return;

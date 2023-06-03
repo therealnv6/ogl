@@ -6,9 +6,16 @@
 namespace ray
 {
 	template<int X, int Y, int Z>
-	voxel::voxel_data *trace_ray(
+	std::optional<voxel::voxel_data> trace_ray(
 		const ray::raycast &ray,
 		const voxel::grid<X, Y, Z> &grid,
 		glm::vec3 deltas,
 		glm::vec3 steps);
+
+	std::optional<voxel::voxel_data> trace_ray(
+		const ray::raycast &ray,
+		const voxel::grid<16, 16, 16> &grid,
+		glm::vec3 deltas,
+		glm::vec3 steps);
+
 }

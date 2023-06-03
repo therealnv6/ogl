@@ -2,12 +2,11 @@ cmake_minimum_required(VERSION 3.13)
 project(meowfu)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
-set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 20)
 set(IMGUI_LIBRARIES ImGui;glfw;GLEW;GL)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 find_package(spdlog REQUIRED)

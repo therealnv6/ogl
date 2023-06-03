@@ -1,6 +1,8 @@
 #pragma once
 #include <functional>
 #include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+#include <iostream>
 #include <spdlog/spdlog.h>
 #include <vector>
 
@@ -22,7 +24,7 @@ namespace voxel
 			, max_bound(glm::vec3(x, y, z))
 			, min_bound(glm::vec3(0, 0, 0))
 		{
-			spdlog::debug("created new grid");
+			voxels.resize(x * y * z);
 		}
 
 		[[nodiscard]] glm::vec3 get_size() const
@@ -57,12 +59,23 @@ namespace voxel
 			return grid_size;
 		}
 
-		[[nodiscard]] voxel_data *get_voxel_at(int lx, int ly, int lz)
+		[[nodiscard]] std::optional<voxel_data> get_voxel_at(int lx, int ly, int lz) const
 		{
-			int index = lx + z * (ly + y * lz);
-			voxel_data *data = voxels[index];
+			int index = lx + x * (ly + y * lz);
+			auto data = voxels[index];
 
 			return data;
+		}
+
+		void set_voxel_at(glm::vec3 position, glm::vec3 color)
+		{
+			int index = position.x + x * (position.y + y * position.z);
+			voxel_data data = {
+				.color = color,
+				.position = position,
+			};
+
+			voxels.at(index) = data;
 		}
 
 	private:
@@ -73,6 +86,6 @@ namespace voxel
 		const glm::vec3 amount;
 		const glm::vec3 size;
 
-		voxel_data voxels[x * y * z];
+		std::vector<std::optional<voxel_data>> voxels;
 	};
 }

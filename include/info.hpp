@@ -35,7 +35,6 @@ namespace info
 		case memory_scale::gigabytes:
 			converted_memory /= 1000.0f;
 			[[fallthrough]];
-
 		case memory_scale::megabytes:
 			converted_memory /= 1024.0f;
 			[[fallthrough]];

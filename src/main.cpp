@@ -14,10 +14,17 @@
 #include <shader.hpp>
 #include <spdlog/spdlog.h>
 #include <vertices.h>
+#include <voxel/grid.hpp>
+#include <voxel/ray.hpp>
+#include <voxel/tracing.hpp>
 #include <window.hpp>
 
 const static float MOVEMENT_SPEED = 30.0f;
 const static float MOUSE_SPEED = 1.5f;
+
+constexpr int CHUNK_WIDTH = 16;
+constexpr int CHUNK_HEIGHT = 16;
+constexpr int CHUNK_DEPTH = 16;
 
 struct movement {
 	glm::vec3 position = glm::vec3(0, 0, 5);
@@ -86,6 +93,7 @@ public:
 
 					if (ImGui::BeginTabItem("Controls"))
 					{
+						ImGui::EndTabItem();
 					}
 
 					ImGui::EndTabBar();
@@ -103,6 +111,9 @@ public:
 			auto camera_entity = registry->view<gfx::camera>().front();
 			auto camera = registry->get<gfx::camera>(camera_entity);
 
+			auto grid_entity = registry->view<voxel::grid<CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH>>().front();
+			auto grid = registry->get<voxel::grid<CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH>>(grid_entity);
+
 			gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
 
 			framework->shader->bind();
@@ -111,6 +122,36 @@ public:
 			framework->color_buffer->bind_vertex(1, 3);
 
 			gfx::draw_arrays(0, 12 * 3);
+
+			{
+				ray::raycast cast(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 0.0));
+
+				// deltas and steps, these are used for the raycasting
+				glm::vec3 deltas(1.0f, 1.0f, 1.0f);
+				glm::vec3 steps(1.0f, 1.0f, 1.0f);
+
+				// Iterate over each voxel position in the chunk
+				for (int x = 0; x < CHUNK_WIDTH; ++x)
+				{
+					for (int y = 0; y < CHUNK_HEIGHT; ++y)
+					{
+						for (int z = 0; z < CHUNK_DEPTH; ++z)
+						{
+							cast.set_origin(glm::vec3(x, y, z));
+
+							auto voxel = ray::trace_ray(cast, grid, deltas, steps);
+
+							if (voxel != std::nullopt)
+							{
+								spdlog::info("rendering voxel at {}, {}, {}",
+									voxel.value().position.x,
+									voxel.value().position.y,
+									voxel.value().position.z);
+							}
+						}
+					}
+				}
+			}
 		}
 
 		void update_camera(const frame::tick_event &event)
@@ -226,11 +267,20 @@ public:
 		}
 
 		{
-			vertices_buffer = std::make_unique<buffer::buffer>(&data, sizeof(data), buffer::draw_type::Static);
-			color_buffer = std::make_unique<buffer::buffer>(&colors, sizeof(colors), buffer::draw_type::Static);
+			vertices_buffer = std::make_unique<buffer::buffer>(&data, sizeof(data), draw_type::Static);
+			color_buffer = std::make_unique<buffer::buffer>(&colors, sizeof(colors), draw_type::Static);
 		}
 
 		shader = std::make_unique<shader::shader>("shaders/simple.vert", "shaders/simple.frag");
+
+		voxel::grid<CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH> grid(
+			glm::vec3(1.0, 1.0, 1.0),
+			glm::vec3(1.0, 1.0, 1.0),
+			glm::vec3(1.0, 1.0, 1.0));
+
+		grid.set_voxel_at(glm::vec3(3.0, 3.0, 3.0), glm::zero<glm::vec3>());
+
+		registry.emplace<voxel::grid<CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH>>(registry.create(), grid);
 
 		registry.emplace<gfx::camera>(registry.create());
 		registry.emplace<movement>(registry.create());

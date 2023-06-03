@@ -30,8 +30,18 @@ namespace ray
 			return direction;
 		}
 
+		void set_origin(glm::vec3 origin)
+		{
+			this->origin = origin;
+		}
+
+		void set_direction(glm::vec3 direction)
+		{
+			this->direction = direction;
+		}
+
 	private:
-		const glm::vec3 origin;
-		const glm::vec3 direction;
+		glm::vec3 origin;
+		glm::vec3 direction;
 	};
 }

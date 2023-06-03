@@ -4,15 +4,15 @@
 #include <memory>
 #include <render.hpp>
 
+enum class draw_type : int
+{
+	Static = GL_STATIC_DRAW,
+	Dynamic = GL_DYNAMIC_DRAW,
+	Stream = GL_STREAM_DRAW
+};
+
 namespace buffer
 {
-	enum class draw_type
-	{
-		Static = GL_STATIC_DRAW,
-		Dynamic = GL_DYNAMIC_DRAW,
-		Stream = GL_STREAM_DRAW
-	};
-
 	class buffer
 	{
 	public:

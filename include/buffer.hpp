@@ -34,6 +34,24 @@ namespace buffer
 			});
 		}
 
+		void resize(int new_size)
+		{
+			if (size != new_size)
+			{
+				this->bind([&]() {
+					glBufferData(GL_ARRAY_BUFFER, new_size, nullptr, static_cast<int>(type));
+				});
+				size = new_size;
+			}
+		}
+
+		void write(void *data, int data_size, int offset)
+		{
+			this->bind([&]() {
+				glBufferSubData(GL_ARRAY_BUFFER, offset, data_size, data);
+			});
+		}
+
 		void bind(std::function<void()> callback)
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, buffer_id);
@@ -48,6 +66,11 @@ namespace buffer
 			this->bind([&]() {
 				gfx::vertex_attribute(attribute_pos, size, offset);
 			});
+		}
+
+		int get_size()
+		{
+			return size;
 		}
 
 	private:

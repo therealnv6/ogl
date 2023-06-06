@@ -9,12 +9,13 @@ namespace ray
 		const ray::raycast &ray,
 		const voxel::grid<X, Y, Z> &grid,
 		glm::vec3 deltas,
-		glm::vec3 steps)
+		glm::vec3 steps,
+		glm::vec3 start_position)
 	{
 		glm::vec3 origin = ray.get_origin();
 		glm::vec3 max_bound = grid.get_max_bound();
 
-		auto [x, y, z] = std::make_tuple(origin.x, origin.y, origin.z);
+		auto [x, y, z] = std::make_tuple(start_position.x, start_position.y, start_position.z);
 		auto [deltaX, deltaY, deltaZ] = std::make_tuple(0.0f, 0.0f, 0.0f);
 
 		std::optional<voxel::voxel_data> data = std::nullopt;
@@ -63,8 +64,9 @@ namespace ray
 		const ray::raycast &ray,
 		const voxel::grid<16, 16, 16> &grid,
 		glm::vec3 deltas,
-		glm::vec3 steps)
+		glm::vec3 steps,
+		glm::vec3 start_position)
 	{
-		return trace_ray<16, 16, 16>(ray, grid, deltas, steps);
+		return trace_ray<16, 16, 16>(ray, grid, deltas, steps, start_position);
 	}
 }

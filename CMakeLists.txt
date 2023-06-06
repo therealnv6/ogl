@@ -15,6 +15,7 @@ find_package(OpenGL REQUIRED)
 
 add_subdirectory(thirdparty/glfw)
 add_subdirectory(thirdparty/entt)
+add_subdirectory(thirdparty/imterm)
 
 find_program(MOLD_LINKER_EXE mold)
 set(IMGUI_DIR thirdparty/imgui)
@@ -61,6 +62,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS}
     "thirdparty/glfw/include/"
+    "thirdparty/imterm/include/"
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 

@@ -27,7 +27,7 @@ constexpr int CHUNK_HEIGHT = 16;
 constexpr int CHUNK_DEPTH = 16;
 
 struct movement {
-	glm::vec3 position = glm::vec3(0, 0, 5);
+	glm::vec3 position = glm::vec3(0, 0, 0);
 
 	float horizontalAngle = 0.0f;
 	float verticalAngle = 0.0f;
@@ -109,48 +109,58 @@ public:
 			auto framework = static_cast<test_framework *>(event.data);
 
 			auto camera_entity = registry->view<gfx::camera>().front();
-			auto camera = registry->get<gfx::camera>(camera_entity);
-
 			auto grid_entity = registry->view<voxel::grid<CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH>>().front();
+
+			auto view = registry->view<movement>();
+
+			auto camera = registry->get<gfx::camera>(camera_entity);
 			auto grid = registry->get<voxel::grid<CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH>>(grid_entity);
 
 			gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
 
 			framework->shader->bind();
 
-			framework->vertices_buffer->bind_vertex(0, 3);
-			framework->color_buffer->bind_vertex(1, 3);
-
-			gfx::draw_arrays(0, 12 * 3);
-
+			for (auto [entity, movement] : view.each())
 			{
-				ray::raycast cast(glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 0.0));
+				ray::raycast cast(
+					camera.get_position(),
+					camera.get_direction());
 
 				// deltas and steps, these are used for the raycasting
 				glm::vec3 deltas(1.0f, 1.0f, 1.0f);
 				glm::vec3 steps(1.0f, 1.0f, 1.0f);
 
-				// Iterate over each voxel position in the chunk
-				for (int x = 0; x < CHUNK_WIDTH; ++x)
-				{
-					for (int y = 0; y < CHUNK_HEIGHT; ++y)
-					{
-						for (int z = 0; z < CHUNK_DEPTH; ++z)
-						{
-							cast.set_origin(glm::vec3(x, y, z));
+				voxel::voxel_set voxels;
 
-							auto voxel = ray::trace_ray(cast, grid, deltas, steps);
+				// Iterate over each voxel position in the chunk
+				for (float x = 0.0f; x < CHUNK_WIDTH; ++x)
+				{
+					for (float y = 0.0f; y < CHUNK_HEIGHT; ++y)
+					{
+						for (float z = 0.0f; z < CHUNK_DEPTH; ++z)
+						{
+							glm::vec3 voxel_position(x, y, z);
+							glm::vec3 player_position = movement.position - voxel_position;
+
+							cast.set_origin(voxel_position);
+
+							auto voxel = ray::trace_ray(cast, grid, deltas, steps, player_position);
 
 							if (voxel != std::nullopt)
 							{
-								spdlog::info("rendering voxel at {}, {}, {}",
-									voxel.value().position.x,
-									voxel.value().position.y,
-									voxel.value().position.z);
+								spdlog::debug(
+									"pushing voxel at location {}, {}, {}, while player is at {}, {}, {}",
+									x, y, z,
+									player_position.x, player_position.y, player_position.z);
+
+								voxels.insert(voxel.value());
 							}
 						}
 					}
 				}
+
+				grid.update_buffer(voxels);
+				grid.draw_buffer();
 			}
 		}
 
@@ -258,11 +268,9 @@ public:
 		}
 
 		{
-			gfx::enable(gfx::enable_fields::CullFace);
+			// gfx::enable(gfx::enable_fields::CullFace);
 			gfx::depth(gfx::depth_function::Less);
-
 			gfx::clear_color({ 0.0, 0.1, 0.2, 0.0 });
-
 			buffer::reserve_vertex_array(1);
 		}
 
@@ -274,11 +282,15 @@ public:
 		shader = std::make_unique<shader::shader>("shaders/simple.vert", "shaders/simple.frag");
 
 		voxel::grid<CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH> grid(
+			glm::vec3(0.0, 0.0, 0.0),
 			glm::vec3(1.0, 1.0, 1.0),
 			glm::vec3(1.0, 1.0, 1.0),
 			glm::vec3(1.0, 1.0, 1.0));
 
-		grid.set_voxel_at(glm::vec3(3.0, 3.0, 3.0), glm::zero<glm::vec3>());
+		grid.set_voxel_at(glm::vec3(3.0, 3.0, 3.0), glm::vec3(1.0, 1.0, 1.0));
+		grid.set_voxel_at(glm::vec3(4.0, 4.0, 4.0), glm::vec3(0.0, 1.0, 0.0));
+		grid.set_voxel_at(glm::vec3(5.0, 4.0, 4.0), glm::vec3(1.0, 0.0, 0.0));
+		grid.set_voxel_at(glm::vec3(6.0, 4.0, 4.0), glm::vec3(1.0, 1.0, 0.0));
 
 		registry.emplace<voxel::grid<CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH>>(registry.create(), grid);
 
@@ -296,7 +308,7 @@ public:
 
 int main()
 {
-	gfx::context context("voxel", 2560, 1440);
+	gfx::context context("voxel", 2560, 800);
 	test_framework framework(&context);
 
 	framework.run();

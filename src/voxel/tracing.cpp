@@ -13,49 +13,69 @@ namespace ray
 		glm::vec3 start_position)
 	{
 		glm::vec3 origin = ray.get_origin();
+		glm::vec3 direction = ray.get_direction();
 		glm::vec3 max_bound = grid.get_max_bound();
+		glm::vec3 min_bound = grid.get_min_bound();
 
-		auto [x, y, z] = std::make_tuple(start_position.x, start_position.y, start_position.z);
+		// Calculate the initial position on the ray
+		glm::vec3 position = start_position;
+
+		auto [x, y, z] = std::make_tuple(position.x, position.y, position.z);
 		auto [deltaX, deltaY, deltaZ] = std::make_tuple(0.0f, 0.0f, 0.0f);
 
 		std::optional<voxel::voxel_data> data = std::nullopt;
 
-		do
-		{
-			if (deltaX < deltaY)
-			{
-				if (deltaX < deltaZ)
-				{
-					x += steps.x;
-					deltaX += deltas.x;
-				}
-				else
-				{
-					z += steps.z;
-					deltaZ += deltas.z;
-				}
-			}
-			else
-			{
-				if (deltaY < deltaZ)
-				{
-					y += steps.y;
-					deltaY += deltas.z;
-				}
-				else
-				{
-					z += steps.z;
-					deltaZ += deltas.z;
-				}
-			}
+		// Calculate the maximum distance along the ray
+		float tMaxX = (direction.x > 0) ? (max_bound.x - origin.x) / direction.x : (min_bound.x - origin.x) / direction.x;
+		float tMaxY = (direction.y > 0) ? (max_bound.y - origin.y) / direction.y : (min_bound.y - origin.y) / direction.y;
+		float tMaxZ = (direction.z > 0) ? (max_bound.z - origin.z) / direction.z : (min_bound.z - origin.z) / direction.z;
 
-			if (x >= max_bound.x || y >= max_bound.y || z >= max_bound.z)
+		// Calculate the distance to move along the ray for each step
+		float tDeltaX = std::abs(deltas.x / direction.x);
+		float tDeltaY = std::abs(deltas.y / direction.y);
+		float tDeltaZ = std::abs(deltas.z / direction.z);
+
+		// Determine the direction to step along the ray
+		int stepX = (direction.x > 0) ? 1 : -1;
+		int stepY = (direction.y > 0) ? 1 : -1;
+		int stepZ = (direction.z > 0) ? 1 : -1;
+
+		// Perform ray marching
+		while (x >= min_bound.x && y >= min_bound.y && z >= min_bound.z && x < max_bound.x && y < max_bound.y && z < max_bound.z)
+		{
+			data = grid.get_voxel_at(static_cast<int>(x), static_cast<int>(y), static_cast<int>(z));
+			if (data.has_value())
 			{
 				break;
 			}
 
-			data = grid.get_voxel_at(x, y, z);
-		} while (!data.has_value());
+			if (tMaxX < tMaxY)
+			{
+				if (tMaxX < tMaxZ)
+				{
+					x += stepX;
+					tMaxX += tDeltaX;
+				}
+				else
+				{
+					z += stepZ;
+					tMaxZ += tDeltaZ;
+				}
+			}
+			else
+			{
+				if (tMaxY < tMaxZ)
+				{
+					y += stepY;
+					tMaxY += tDeltaY;
+				}
+				else
+				{
+					z += stepZ;
+					tMaxZ += tDeltaZ;
+				}
+			}
+		}
 
 		return data;
 	}

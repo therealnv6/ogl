@@ -6,6 +6,7 @@
 #include <framework.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <spdlog/common.h>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include <imgui.h>
@@ -41,9 +42,6 @@ struct poll_input_event {
 class test_framework : public frame::framework
 {
 public:
-	buffer::unique_buffer vertices_buffer;
-	buffer::unique_buffer color_buffer;
-
 	std::unique_ptr<shader::shader> shader;
 
 	test_framework(gfx::context *context)
@@ -120,17 +118,17 @@ public:
 
 			framework->shader->bind();
 
+			voxel::voxel_set voxels;
+
 			for (auto [entity, movement] : view.each())
 			{
 				ray::raycast cast(
-					camera.get_position(),
+					movement.position,
 					camera.get_direction());
 
 				// deltas and steps, these are used for the raycasting
 				glm::vec3 deltas(1.0f, 1.0f, 1.0f);
 				glm::vec3 steps(1.0f, 1.0f, 1.0f);
-
-				voxel::voxel_set voxels;
 
 				// Iterate over each voxel position in the chunk
 				for (float x = 0.0f; x < CHUNK_WIDTH; ++x)
@@ -140,9 +138,7 @@ public:
 						for (float z = 0.0f; z < CHUNK_DEPTH; ++z)
 						{
 							glm::vec3 voxel_position(x, y, z);
-							glm::vec3 player_position = movement.position - voxel_position;
-
-							cast.set_origin(voxel_position);
+							glm::vec3 player_position = voxel_position - movement.position;
 
 							auto voxel = ray::trace_ray(cast, grid, deltas, steps, player_position);
 
@@ -158,10 +154,10 @@ public:
 						}
 					}
 				}
-
-				grid.update_buffer(voxels);
-				grid.draw_buffer();
 			}
+
+			grid.update_buffer(voxels);
+			grid.draw_buffer();
 		}
 
 		void update_camera(const frame::tick_event &event)
@@ -262,21 +258,17 @@ public:
 	void initialize() override
 	{
 		this->init_gui();
+
 		{
 			context->input_mode(input::input_mode::StickyKeys, true);
 			context->input_mode(input::input_mode::Cursor, GLFW_CURSOR_DISABLED);
 		}
 
 		{
-			// gfx::enable(gfx::enable_fields::CullFace);
+			gfx::enable(gfx::enable_fields::CullFace);
 			gfx::depth(gfx::depth_function::Less);
 			gfx::clear_color({ 0.0, 0.1, 0.2, 0.0 });
 			buffer::reserve_vertex_array(1);
-		}
-
-		{
-			vertices_buffer = std::make_unique<buffer::buffer>(&data, sizeof(data), draw_type::Static);
-			color_buffer = std::make_unique<buffer::buffer>(&colors, sizeof(colors), draw_type::Static);
 		}
 
 		shader = std::make_unique<shader::shader>("shaders/simple.vert", "shaders/simple.frag");
@@ -287,10 +279,18 @@ public:
 			glm::vec3(1.0, 1.0, 1.0),
 			glm::vec3(1.0, 1.0, 1.0));
 
-		grid.set_voxel_at(glm::vec3(3.0, 3.0, 3.0), glm::vec3(1.0, 1.0, 1.0));
-		grid.set_voxel_at(glm::vec3(4.0, 4.0, 4.0), glm::vec3(0.0, 1.0, 0.0));
-		grid.set_voxel_at(glm::vec3(5.0, 4.0, 4.0), glm::vec3(1.0, 0.0, 0.0));
-		grid.set_voxel_at(glm::vec3(6.0, 4.0, 4.0), glm::vec3(1.0, 1.0, 0.0));
+		for (int x = 0; x < CHUNK_WIDTH; x++)
+		{
+			for (int y = 0; y < CHUNK_HEIGHT; y++)
+			{
+				for (int z = 0; z < CHUNK_DEPTH; z++)
+				{
+					glm::vec3 voxelPosition(x, y, z);
+					glm::vec3 voxelColor(voxelPosition.x / CHUNK_WIDTH, voxelPosition.y / CHUNK_HEIGHT, voxelPosition.z / CHUNK_DEPTH);
+					grid.set_voxel_at(voxelPosition, voxelColor);
+				}
+			}
+		}
 
 		registry.emplace<voxel::grid<CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH>>(registry.create(), grid);
 

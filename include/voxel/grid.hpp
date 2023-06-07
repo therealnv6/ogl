@@ -1,5 +1,6 @@
 #pragma once
 #include "buffer.hpp"
+#include "render.hpp"
 #include <functional>
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
@@ -40,12 +41,14 @@ namespace voxel
 	private:
 		buffer::buffer *vertex_buffer;
 		buffer::buffer *color_buffer;
+		buffer::buffer *index_buffer;
 
 	public:
 		grid_buffer(glm::vec3 bounds)
 		{
 			vertex_buffer = new buffer::buffer(nullptr, 0, draw_type::Dynamic);
 			color_buffer = new buffer::buffer(nullptr, 0, draw_type::Dynamic);
+			index_buffer = new buffer::buffer(nullptr, 0, draw_type::Dynamic);
 		}
 
 		void update_buffers(voxel_set data)
@@ -59,17 +62,43 @@ namespace voxel
 				max_buffer_size * type_size,
 				vertex_buffer->get_size());
 
-			vertex_buffer->resize(max_buffer_size * type_size);
-			color_buffer->resize(max_buffer_size * type_size);
+			size_t cube_vertex_count = 8;
+
+			vertex_buffer->resize(cube_vertex_count * max_buffer_size * type_size);
+			color_buffer->resize(cube_vertex_count * max_buffer_size * type_size);
+			index_buffer->resize(cube_vertex_count * max_buffer_size * sizeof(unsigned int));
+
+			unsigned int *indices = new unsigned int[cube_vertex_count * max_buffer_size];
 
 			int i = 0;
+			int vertex_index = 0;
 
 			for (auto voxel : data)
 			{
-				vertex_buffer->write(reinterpret_cast<void *>(&voxel.position), type_size, i * type_size);
-				color_buffer->write(reinterpret_cast<void *>(&voxel.color), type_size, i * type_size);
-				i++;
+				const float half_size = 0.5f;
+
+				for (int j = 0; j < cube_vertex_count; j++)
+				{
+					glm::vec3 offset;
+					offset.x = ((j & 1) ? half_size : -half_size);
+					offset.y = ((j & 2) ? half_size : -half_size);
+					offset.z = ((j & 4) ? half_size : -half_size);
+
+					glm::vec3 location = voxel.position + offset;
+
+					vertex_buffer->write(reinterpret_cast<void *>(&location), type_size, vertex_index * type_size);
+					color_buffer->write(reinterpret_cast<void *>(&voxel.color), type_size, vertex_index * type_size);
+
+					indices[vertex_index] = vertex_index;
+					vertex_index++;
+				}
+
+				i += cube_vertex_count;
 			}
+
+			index_buffer->update(reinterpret_cast<void *>(indices));
+
+			delete[] indices;
 		}
 
 		void draw()
@@ -78,8 +107,10 @@ namespace voxel
 			{
 				vertex_buffer->bind_vertex(0, 3);
 				color_buffer->bind_vertex(1, 3);
+				index_buffer->bind_indices();
 
-				gfx::draw_arrays(0, vertex_buffer->get_size() + 128);
+				gfx::draw_elements(index_buffer->get_size());
+				gfx::draw_arrays(0, vertex_buffer->get_size());
 			}
 		}
 	};

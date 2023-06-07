@@ -51,6 +51,11 @@ namespace gfx
 	{
 		glDrawArrays(GL_TRIANGLES, 0, count);
 	}
+
+	void draw_elements(int indices)
+	{
+		glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, (void *) 0);
+	}
 }
 
 namespace imgui

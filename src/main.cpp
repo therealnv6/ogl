@@ -23,9 +23,9 @@
 const static float MOVEMENT_SPEED = 30.0f;
 const static float MOUSE_SPEED = 1.5f;
 
-constexpr int CHUNK_WIDTH = 16;
-constexpr int CHUNK_HEIGHT = 16;
-constexpr int CHUNK_DEPTH = 16;
+constexpr int CHUNK_WIDTH = 32;
+constexpr int CHUNK_HEIGHT = 32;
+constexpr int CHUNK_DEPTH = 32;
 
 struct movement {
 	glm::vec3 position = glm::vec3(0, 0, 0);
@@ -131,27 +131,23 @@ public:
 				glm::vec3 steps(1.0f, 1.0f, 1.0f);
 
 				// Iterate over each voxel position in the chunk
-				for (float x = 0.0f; x < CHUNK_WIDTH; ++x)
+
+				glm::vec3 player_position = movement.position;
+
+				for (int yaw = -45; yaw < 45; yaw++)
 				{
-					for (float y = 0.0f; y < CHUNK_HEIGHT; ++y)
+					cast.set_direction(camera.get_direction() + static_cast<float>(yaw));
+
+					auto voxel = ray::trace_ray(cast, grid, deltas, steps, player_position);
+
+					if (voxel != std::nullopt)
 					{
-						for (float z = 0.0f; z < CHUNK_DEPTH; ++z)
-						{
-							glm::vec3 voxel_position(x, y, z);
-							glm::vec3 player_position = voxel_position - movement.position;
+						spdlog::debug(
+							"pushing voxel at location {}, {}, {}, while player is at {}, {}, {}",
+							voxel->position.x, voxel->position.y, voxel->position.z,
+							player_position.x, player_position.y, player_position.z);
 
-							auto voxel = ray::trace_ray(cast, grid, deltas, steps, player_position);
-
-							if (voxel != std::nullopt)
-							{
-								spdlog::debug(
-									"pushing voxel at location {}, {}, {}, while player is at {}, {}, {}",
-									x, y, z,
-									player_position.x, player_position.y, player_position.z);
-
-								voxels.insert(voxel.value());
-							}
-						}
+						voxels.insert(voxel.value());
 					}
 				}
 			}
@@ -258,6 +254,7 @@ public:
 	void initialize() override
 	{
 		this->init_gui();
+		spdlog::set_level(spdlog::level::debug);
 
 		{
 			context->input_mode(input::input_mode::StickyKeys, true);

@@ -4,7 +4,7 @@
 
 namespace ray
 {
-	static const int VIEW_DISTANCE = 50;
+	static const int VIEW_DISTANCE = 480;
 	static const glm::vec3 VIEW_DISTANCE_VEC = glm::vec3(static_cast<float>(VIEW_DISTANCE));
 
 	template<int X, int Y, int Z>
@@ -12,8 +12,7 @@ namespace ray
 		const ray::raycast &ray,
 		const voxel::grid<X, Y, Z> &grid,
 		glm::vec3 deltas,
-		glm::vec3 steps,
-		glm::vec3 start_position)
+		glm::vec3 steps)
 	{
 		glm::vec3 origin = ray.get_origin();
 		glm::vec3 direction = ray.get_direction();
@@ -25,9 +24,9 @@ namespace ray
 		std::optional<voxel::voxel_data> data = std::nullopt;
 
 		// Calculate the maximum distance along the ray
-		float tMaxX = (direction.x > 0) ? (max_bound.x - start_position.x) / direction.x : (min_bound.x - start_position.x) / direction.x;
-		float tMaxY = (direction.y > 0) ? (max_bound.y - start_position.y) / direction.y : (min_bound.y - start_position.y) / direction.y;
-		float tMaxZ = (direction.z > 0) ? (max_bound.z - start_position.z) / direction.z : (min_bound.z - start_position.z) / direction.z;
+		float tMaxX = (direction.x > 0) ? (max_bound.x - origin.x) / direction.x : (min_bound.x - origin.x) / direction.x;
+		float tMaxY = (direction.y > 0) ? (max_bound.y - origin.y) / direction.y : (min_bound.y - origin.y) / direction.y;
+		float tMaxZ = (direction.z > 0) ? (max_bound.z - origin.z) / direction.z : (min_bound.z - origin.z) / direction.z;
 
 		// Calculate the distance to move along the ray for each step
 		float tDeltaX = std::abs(deltas.x / direction.x);
@@ -35,14 +34,14 @@ namespace ray
 		float tDeltaZ = std::abs(deltas.z / direction.z);
 
 		// Determine the direction to step along the ray
-		int stepX = (direction.x > 0) ? 1 : -1;
-		int stepY = (direction.y > 0) ? 1 : -1;
-		int stepZ = (direction.z > 0) ? 1 : -1;
+		int stepX = (direction.x > 0) ? steps.x : -steps.x;
+		int stepY = (direction.y > 0) ? steps.y : -steps.y;
+		int stepZ = (direction.z > 0) ? steps.z : -steps.z;
 
 		// Perform ray marching
-		glm::vec3 current_position = start_position;
+		glm::vec3 current_position = origin;
 
-		while (!data.has_value() && glm::all(glm::lessThan(glm::abs(current_position - start_position), VIEW_DISTANCE_VEC)))
+		while (!data.has_value() && glm::all(glm::lessThan(glm::abs(current_position - origin), VIEW_DISTANCE_VEC)))
 		{
 			int x = static_cast<int>((current_position.x - min_bound.x) / deltas.x + 0.5f);
 			int y = static_cast<int>((current_position.y - min_bound.y) / deltas.y + 0.5f);
@@ -85,19 +84,17 @@ namespace ray
 		const ray::raycast &ray,
 		const voxel::grid<16, 16, 16> &grid,
 		glm::vec3 deltas,
-		glm::vec3 steps,
-		glm::vec3 start_position)
+		glm::vec3 steps)
 	{
-		return trace_ray<16, 16, 16>(ray, grid, deltas, steps, start_position);
+		return trace_ray<16, 16, 16>(ray, grid, deltas, steps);
 	}
 
 	std::optional<voxel::voxel_data> trace_ray(
 		const ray::raycast &ray,
 		const voxel::grid<32, 32, 32> &grid,
 		glm::vec3 deltas,
-		glm::vec3 steps,
-		glm::vec3 start_position)
+		glm::vec3 steps)
 	{
-		return trace_ray<32, 32, 32>(ray, grid, deltas, steps, start_position);
+		return trace_ray<32, 32, 32>(ray, grid, deltas, steps);
 	}
 }

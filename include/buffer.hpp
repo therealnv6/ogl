@@ -36,7 +36,7 @@ namespace buffer
 
 		void resize(int new_size)
 		{
-			if (size <= new_size)
+			// if (size <= new_size)
 			{
 				this->bind([&]() {
 					glBufferData(GL_ARRAY_BUFFER, new_size, nullptr, static_cast<int>(type));

@@ -134,11 +134,13 @@ public:
 
 				glm::vec3 player_position = movement.position;
 
+				cast.set_origin(player_position);
+
 				for (int yaw = -45; yaw < 45; yaw++)
 				{
-					cast.set_direction(camera.get_direction() + static_cast<float>(yaw));
+					cast.set_direction(camera.get_direction() + glm::radians(static_cast<float>(yaw)));
 
-					auto voxel = ray::trace_ray(cast, grid, deltas, steps, player_position);
+					auto voxel = ray::trace_ray(cast, grid, deltas, steps);
 
 					if (voxel != std::nullopt)
 					{
@@ -305,7 +307,7 @@ public:
 
 int main()
 {
-	gfx::context context("voxel", 2560, 800);
+	gfx::context context("voxel", 2560, 1440);
 	test_framework framework(&context);
 
 	framework.run();

@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(IMGUI_LIBRARIES ImGui;glfw;GLEW;GL)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug)
+  set(CMAKE_BUILD_TYPE Release)
 endif()
 
 find_package(spdlog REQUIRED)

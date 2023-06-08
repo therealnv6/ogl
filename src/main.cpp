@@ -23,9 +23,9 @@
 const static float MOVEMENT_SPEED = 30.0f;
 const static float MOUSE_SPEED = 1.5f;
 
-constexpr int CHUNK_WIDTH = 32;
-constexpr int CHUNK_HEIGHT = 32;
-constexpr int CHUNK_DEPTH = 32;
+constexpr int CHUNK_WIDTH = 16;
+constexpr int CHUNK_HEIGHT = 16;
+constexpr int CHUNK_DEPTH = 16;
 
 struct movement {
 	glm::vec3 position = glm::vec3(0, 0, 0);
@@ -119,6 +119,7 @@ public:
 			framework->shader->bind();
 
 			voxel::voxel_set voxels;
+			voxels.reserve(80 * 80);
 
 			for (auto [entity, movement] : view.each())
 			{
@@ -130,26 +131,35 @@ public:
 				glm::vec3 deltas(1.0f, 1.0f, 1.0f);
 				glm::vec3 steps(1.0f, 1.0f, 1.0f);
 
-				// Iterate over each voxel position in the chunk
-
 				glm::vec3 player_position = movement.position;
 
 				cast.set_origin(player_position);
 
 				for (int yaw = -45; yaw < 45; yaw++)
 				{
-					cast.set_direction(camera.get_direction() + glm::radians(static_cast<float>(yaw)));
+					float horizontalAngle = glm::radians(static_cast<float>(yaw));
 
-					auto voxel = ray::trace_ray(cast, grid, deltas, steps);
-
-					if (voxel != std::nullopt)
+					for (int pitch = -45; pitch < 45; pitch++)
 					{
-						spdlog::debug(
-							"pushing voxel at location {}, {}, {}, while player is at {}, {}, {}",
-							voxel->position.x, voxel->position.y, voxel->position.z,
-							player_position.x, player_position.y, player_position.z);
+						float verticalAngle = glm::radians(static_cast<float>(pitch));
 
-						voxels.insert(voxel.value());
+						glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), horizontalAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+						rotationMatrix = glm::rotate(rotationMatrix, verticalAngle, glm::vec3(1.0f, 0.0f, 0.0f));
+						glm::vec3 rotatedDirection = glm::vec3(rotationMatrix * glm::vec4(camera.get_direction(), 0.0f));
+
+						cast.set_direction(rotatedDirection);
+
+						const auto voxel = ray::trace_ray(cast, grid, deltas, steps);
+
+						if (voxel != std::nullopt)
+						{
+							spdlog::debug(
+								"pushing voxel at location {}, {}, {}, while player is at {}, {}, {}",
+								voxel->position.x, voxel->position.y, voxel->position.z,
+								player_position.x, player_position.y, player_position.z);
+
+							voxels.insert(voxel.value());
+						}
 					}
 				}
 			}
@@ -158,7 +168,8 @@ public:
 			grid.draw_buffer();
 		}
 
-		void update_camera(const frame::tick_event &event)
+		void
+		update_camera(const frame::tick_event &event)
 		{
 			auto registry = event.registry;
 			auto framework = static_cast<test_framework *>(event.data);

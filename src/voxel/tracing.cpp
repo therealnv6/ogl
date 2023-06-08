@@ -4,7 +4,7 @@
 
 namespace ray
 {
-	static const int VIEW_DISTANCE = 480;
+	static const int VIEW_DISTANCE = 180;
 	static const glm::vec3 VIEW_DISTANCE_VEC = glm::vec3(static_cast<float>(VIEW_DISTANCE));
 
 	template<int X, int Y, int Z>
@@ -41,7 +41,7 @@ namespace ray
 		// Perform ray marching
 		glm::vec3 current_position = origin;
 
-		while (!data.has_value() && glm::all(glm::lessThan(glm::abs(current_position - origin), VIEW_DISTANCE_VEC)))
+		while (!data.has_value() && tMaxX < VIEW_DISTANCE && tMaxY < VIEW_DISTANCE && tMaxZ < VIEW_DISTANCE)
 		{
 			int x = static_cast<int>((current_position.x - min_bound.x) / deltas.x + 0.5f);
 			int y = static_cast<int>((current_position.y - min_bound.y) / deltas.y + 0.5f);

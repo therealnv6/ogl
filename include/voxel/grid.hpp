@@ -62,7 +62,7 @@ namespace voxel
 				max_buffer_size * type_size,
 				vertex_buffer->get_size());
 
-			size_t cube_vertex_count = 8;
+			size_t cube_vertex_count = 36; // 36 vertices for a cube (6 faces * 2 triangles per face * 3 vertices per triangle)
 
 			vertex_buffer->resize(cube_vertex_count * max_buffer_size * type_size);
 			color_buffer->resize(cube_vertex_count * max_buffer_size * type_size);
@@ -70,30 +70,48 @@ namespace voxel
 
 			unsigned int *indices = new unsigned int[cube_vertex_count * max_buffer_size];
 
-			int i = 0;
 			int vertex_index = 0;
+			int index_offset = 0;
 
 			for (auto voxel : data)
 			{
 				const float half_size = 0.5f;
+				glm::vec3 center = voxel.position;
 
-				for (int j = 0; j < cube_vertex_count; j++)
+				// Define the vertices for the cube
+				glm::vec3 vertices[] = {
+					center + glm::vec3(-half_size, -half_size, -half_size),
+					center + glm::vec3(half_size, -half_size, -half_size),
+					center + glm::vec3(half_size, half_size, -half_size),
+					center + glm::vec3(-half_size, half_size, -half_size),
+					center + glm::vec3(-half_size, -half_size, half_size),
+					center + glm::vec3(half_size, -half_size, half_size),
+					center + glm::vec3(half_size, half_size, half_size),
+					center + glm::vec3(-half_size, half_size, half_size)
+				};
+
+				// Define the indices for the cube
+				unsigned int cube_indices[] = {
+					0, 1, 2, 2, 3, 0, // front face
+					1, 5, 6, 6, 2, 1, // right face
+					5, 4, 7, 7, 6, 5, // back face
+					4, 0, 3, 3, 7, 4, // left face
+					3, 2, 6, 6, 7, 3, // top face
+					4, 5, 1, 1, 0, 4 // bottom face
+				};
+
+				for (int i = 0; i < cube_vertex_count; i++)
 				{
-					glm::vec3 offset;
-					offset.x = ((j & 1) ? half_size : -half_size);
-					offset.y = ((j & 2) ? half_size : -half_size);
-					offset.z = ((j & 4) ? half_size : -half_size);
-
-					glm::vec3 location = voxel.position + offset;
+					glm::vec3 location = vertices[cube_indices[i]];
 
 					vertex_buffer->write(reinterpret_cast<void *>(&location), type_size, vertex_index * type_size);
 					color_buffer->write(reinterpret_cast<void *>(&voxel.color), type_size, vertex_index * type_size);
 
-					indices[vertex_index] = vertex_index;
+					indices[index_offset + i] = vertex_index;
 					vertex_index++;
 				}
 
-				i += cube_vertex_count;
+				index_offset += cube_vertex_count;
 			}
 
 			index_buffer->update(reinterpret_cast<void *>(indices));

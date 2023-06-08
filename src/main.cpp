@@ -254,7 +254,7 @@ public:
 	void initialize() override
 	{
 		this->init_gui();
-		spdlog::set_level(spdlog::level::debug);
+		// spdlog::set_level(spdlog::level::debug);
 
 		{
 			context->input_mode(input::input_mode::StickyKeys, true);
@@ -282,9 +282,9 @@ public:
 			{
 				for (int z = 0; z < CHUNK_DEPTH; z++)
 				{
-					glm::vec3 voxelPosition(x, y, z);
-					glm::vec3 voxelColor(voxelPosition.x / CHUNK_WIDTH, voxelPosition.y / CHUNK_HEIGHT, voxelPosition.z / CHUNK_DEPTH);
-					grid.set_voxel_at(voxelPosition, voxelColor);
+					glm::vec3 position(x, y, z);
+					glm::vec3 color(position.x / CHUNK_WIDTH, position.y / CHUNK_HEIGHT, position.z / CHUNK_DEPTH);
+					grid.set_voxel_at(position, color);
 				}
 			}
 		}

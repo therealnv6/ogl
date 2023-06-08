@@ -8,13 +8,6 @@ namespace svo
 		glm::vec3 position;
 		glm::vec3 color;
 		float size;
-
-		voxel(const glm::vec3 &pos, const glm::vec3 &color, float size)
-			: position(pos)
-			, color(color)
-			, size(size)
-		{
-		}
 	};
 
 	struct node {

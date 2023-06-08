@@ -1,5 +1,7 @@
 #pragma once
+#include <buffer.hpp>
 #include <glm/glm.hpp>
+#include <render.hpp>
 #include <voxel/ray.hpp>
 
 namespace svo
@@ -11,9 +13,8 @@ namespace svo
 	};
 
 	struct node {
-		bool leaf;
-		std::vector<voxel> voxels;
-		node *children[8];
+		voxel voxels[8];
+		node *children[8] = { nullptr };
 	};
 
 	class svo
@@ -22,8 +23,7 @@ namespace svo
 		svo(const glm::vec3 &rootPosition, const glm::vec3 &color, float rootSize)
 		{
 			root = new node();
-			root->leaf = true;
-			root->voxels.emplace_back(rootPosition, color, rootSize);
+			root->voxels[0] = voxel(rootPosition, color, rootSize);
 		}
 
 		void subdivide_node(node *node)
@@ -43,11 +43,8 @@ namespace svo
 				child_position.z += (i & 4) ? child_size : -child_size;
 
 				node->children[i] = new class node();
-				node->children[i]->leaf = true;
-				node->children[i]->voxels.emplace_back(child_position, child_color, child_size);
+				node->children[i]->voxels[0] = voxel(child_position, child_color, child_size);
 			}
-
-			node->leaf = false;
 		}
 
 		void construct_octree()
@@ -66,7 +63,10 @@ namespace svo
 
 			for (int i = 0; i < 8; i++)
 			{
-				construct_octree_recursive(node->children[i]);
+				if (node->children[i])
+				{
+					construct_octree_recursive(node->children[i]);
+				}
 			}
 		}
 
@@ -79,34 +79,42 @@ namespace svo
 		{
 			float min = std::numeric_limits<float>::max();
 
-			if (node->leaf)
+			if (!node->children[0])
 			{
-
-				for (const auto &voxel : node->voxels)
+				for (int i = 0; i < 8; i++)
 				{
-					float t = ray.intersect_cube(voxel.position, voxel.size);
-					if (t >= 0.0f && t < min)
+					const auto &voxel = node->voxels[i];
+					if (voxel.size > 0.0f)
 					{
-						min = t;
+						float t = ray.intersect_cube(voxel.position, voxel.size);
+						if (t >= 0.0f && t < min)
+						{
+							min = t;
+						}
 					}
 				}
+
 				return min;
 			}
 			else
 			{
 				for (int i = 0; i < 8; i++)
 				{
-					float t = ray.intersect_cube(node->children[i]->voxels[0].position, node->children[i]->voxels[0].size);
-					if (t >= 0.0f && t < min)
+					const auto &child = node->children[i];
+					if (child)
 					{
-						min = t;
-						ray.set_origin(ray.get_origin() + ray.get_direction() * t);
-
-						auto result = march_recursive(ray, max_distance - t, node->children[i]);
-
-						if (result >= 0.0f)
+						float t = ray.intersect_cube(child->voxels[0].position, child->voxels[0].size);
+						if (t >= 0.0f && t < min)
 						{
-							return t + result;
+							min = t;
+							ray.set_origin(ray.get_origin() + ray.get_direction() * t);
+
+							auto result = march_recursive(ray, max_distance - t, child);
+
+							if (result >= 0.0f)
+							{
+								return t + result;
+							}
 						}
 					}
 				}

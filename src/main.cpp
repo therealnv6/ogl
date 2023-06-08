@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <spdlog/common.h>
+#include <voxel/svo.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/string_cast.hpp>
 #include <imgui.h>
@@ -166,6 +167,45 @@ public:
 
 			grid.update_buffer(voxels);
 			grid.draw_buffer();
+		}
+
+		void tick_svo(const frame::tick_event &event)
+		{
+			auto registry = event.registry;
+			auto framework = static_cast<test_framework *>(event.data);
+
+			auto camera_entity = registry->view<gfx::camera>().front();
+			auto svo_entity = registry->view<svo::svo>().front();
+
+			auto view = registry->view<movement>();
+
+			auto camera = registry->get<gfx::camera>(camera_entity);
+			auto svo = registry->get<svo::svo>(svo_entity);
+
+			gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
+
+			framework->shader->bind();
+
+			// Perform raycasting for each camera position
+			for (auto [entity, movement] : view.each())
+			{
+				ray::raycast cast(movement.position, camera.get_direction());
+
+				const float VIEW_DISTANCE = 100.0f;
+
+				glm::vec3 deltas(1.0f, 1.0f, 1.0f);
+				glm::vec3 steps(1.0f, 1.0f, 1.0f);
+
+				cast.set_origin(movement.position);
+
+				// Perform ray marching
+				float distance = svo.march(cast, VIEW_DISTANCE);
+
+				if (distance >= 0.0f && distance < VIEW_DISTANCE)
+				{
+					glm::vec3 intersection_point = cast.get_origin() + cast.get_direction() * distance;
+				}
+			}
 		}
 
 		void

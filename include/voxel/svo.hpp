@@ -17,14 +17,7 @@ namespace svo
 		}
 	};
 
-	class node
-	{
-	public:
-		node(bool leaf = true)
-		{
-			this->leaf = leaf;
-		}
-
+	struct node {
 		bool leaf;
 		std::vector<voxel> voxels;
 		node *children[8];

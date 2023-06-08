@@ -20,10 +20,10 @@ namespace svo
 	class svo
 	{
 	public:
-		svo(const glm::vec3 &rootPosition, const glm::vec3 &color, float rootSize)
+		svo(const glm::vec3 &position, const glm::vec3 &color, float root_size)
 		{
 			root = new node();
-			root->voxels[0] = voxel(rootPosition, color, rootSize);
+			root->voxels[0] = voxel(position, color, root_size);
 		}
 
 		void subdivide_node(node *node)

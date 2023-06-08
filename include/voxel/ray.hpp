@@ -63,6 +63,54 @@ namespace ray
 			direction = glm::normalize(direction);
 		}
 
+		[[nodiscard]] float intersect_cube(const glm::vec3 &center, float size) const
+		{
+			glm::vec3 half_size = glm::vec3(size * 0.5f);
+			glm::vec3 min = center - half_size;
+			glm::vec3 max = center + half_size;
+
+			float tmin = (min.x - origin.x) / direction.x;
+			float tmax = (max.x - origin.x) / direction.x;
+
+			if (tmin > tmax)
+				std::swap(tmin, tmax);
+
+			float tymin = (min.y - origin.y) / direction.y;
+			float tymax = (max.y - origin.y) / direction.y;
+
+			if (tymin > tymax)
+				std::swap(tymin, tymax);
+
+			if ((tmin > tymax) || (tymin > tmax))
+				return -1.0f;
+
+			if (tymin > tmin)
+				tmin = tymin;
+
+			if (tymax < tmax)
+				tmax = tymax;
+
+			float tzmin = (min.z - origin.z) / direction.z;
+			float tzmax = (max.z - origin.z) / direction.z;
+
+			if (tzmin > tzmax)
+				std::swap(tzmin, tzmax);
+
+			if ((tmin > tzmax) || (tzmin > tmax))
+				return -1.0f;
+
+			if (tzmin > tmin)
+				tmin = tzmin;
+
+			if (tzmax < tmax)
+				tmax = tzmax;
+
+			if (tmin < 0.0f)
+				return -1.0f;
+
+			return tmin;
+		}
+
 	private:
 		glm::vec3 origin;
 		glm::vec3 direction;

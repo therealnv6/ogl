@@ -46,9 +46,9 @@ namespace voxel
 	public:
 		grid_buffer(glm::vec3 bounds)
 		{
-			vertex_buffer = new buffer::buffer(nullptr, 0, draw_type::Dynamic);
-			color_buffer = new buffer::buffer(nullptr, 0, draw_type::Dynamic);
-			index_buffer = new buffer::buffer(nullptr, 0, draw_type::Dynamic);
+			vertex_buffer = new buffer::buffer(nullptr, 0, draw_type::dynamic_draw, buffer_type::array);
+			color_buffer = new buffer::buffer(nullptr, 0, draw_type::dynamic_draw, buffer_type::array);
+			index_buffer = new buffer::buffer(nullptr, 0, draw_type::dynamic_draw, buffer_type::array);
 		}
 
 		void update_buffers(voxel_set data)

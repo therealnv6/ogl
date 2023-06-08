@@ -20,12 +20,30 @@ namespace svo
 	class svo
 	{
 	public:
+		/**
+		 * Constructs an SVO with a root voxel.
+		 *
+		 * @param position   The position of the root voxel.
+		 * @param color      The color of the root voxel.
+		 * @param root_size  The size of the root voxel.
+		 *
+		 * @remarks This constructor initializes the SVO with a root voxel at the specified position, color, and size.
+		 */
 		svo(const glm::vec3 &position, const glm::vec3 &color, float root_size)
+			: buffer(buffer::buffer(nullptr, 0, draw_type::dynamic_draw, buffer_type::shader_storage))
 		{
 			root = new node();
 			root->voxels[0] = voxel(position, color, root_size);
 		}
 
+		/**
+		 * Subdivides a node into eight children nodes.
+		 *
+		 * @param node  The node to subdivide.
+		 *
+		 * @remarks This function subdivides the specified
+		 *          node into eight children nodes.
+		 */
 		void subdivide_node(node *node)
 		{
 			const glm::vec3 &parent_pos = node->voxels[0].position;
@@ -47,11 +65,26 @@ namespace svo
 			}
 		}
 
+		/**
+		 * Constructs the octree recursively by subdividing nodes.
+		 *
+		 * @remarks This function constructs the octree recursively by subdividing nodes
+		 *          until the minimum voxel size is reached.
+		 */
 		void construct_octree()
 		{
 			construct_octree_recursive(root);
 		}
 
+		/**
+		 * Constructs the octree recursively by subdividing nodes.
+		 *
+		 * @param node  The current node being processed.
+		 *
+		 * @remarks This function constructs the octree recursively
+		 *          by subdividing nodes until the minimum voxel size
+		 *          for the sparse voxel octree is reached.
+		 */
 		void construct_octree_recursive(node *node)
 		{
 			if (node->voxels[0].size <= min_voxel_size)
@@ -75,6 +108,17 @@ namespace svo
 			return march_recursive(ray, max_distance, root);
 		}
 
+		/**
+		 * Performs ray marching recursively through the octree to find the distance to the nearest surface.
+		 *
+		 * @param ray           The ray to march.
+		 * @param max_distance  The maximum distance to march.
+		 * @param node          The current node being processed.
+		 * @return The distance to the nearest surface.
+		 *
+		 * @remarks This function performs ray marching recursively
+		 *          through the octree to find the distance to the nearest surface.
+		 */
 		float march_recursive(ray::raycast &ray, float max_distance, const node *node) const
 		{
 			float min = std::numeric_limits<float>::max();
@@ -125,5 +169,6 @@ namespace svo
 	private:
 		node *root;
 		float min_voxel_size = 0.01f;
+		buffer::buffer buffer;
 	};
 };

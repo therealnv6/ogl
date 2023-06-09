@@ -33,7 +33,7 @@ namespace svo
 			: buffer(buffer::buffer(nullptr, 0, draw_type::dynamic_draw, buffer_type::shader_storage))
 		{
 			root = new node();
-			root->voxels[0] = voxel(position, color, root_size);
+			root->voxels[0] = voxel { position, color, root_size };
 		}
 
 		/**
@@ -61,7 +61,7 @@ namespace svo
 				child_position.z += (i & 4) ? child_size : -child_size;
 
 				node->children[i] = new class node();
-				node->children[i]->voxels[0] = voxel(child_position, child_color, child_size);
+				node->children[i]->voxels[0] = voxel { child_position, child_color, child_size };
 			}
 		}
 
@@ -164,6 +164,10 @@ namespace svo
 				}
 				return -1.0f;
 			}
+		}
+
+		void bind_to_gpu(buffer::buffer *buffer)
+		{
 		}
 
 	private:

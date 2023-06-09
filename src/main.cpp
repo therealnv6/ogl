@@ -68,6 +68,7 @@ public:
 
 				float total_mem_gb = info::get_memory(memory_type::available_memory, memory_scale::gigabytes);
 				float total_mem_mb = info::get_memory(memory_type::available_memory, memory_scale::megabytes);
+
 				float cur_avail_mem_mb = info::get_memory(memory_type::free_space, memory_scale::megabytes);
 
 				ImGui::Begin("ogl voxel");
@@ -172,44 +173,18 @@ public:
 		void tick_svo(const frame::tick_event &event)
 		{
 			auto registry = event.registry;
-			auto framework = static_cast<test_framework *>(event.data);
 
-			auto camera_entity = registry->view<gfx::camera>().front();
-			auto svo_entity = registry->view<svo::svo>().front();
+			buffer::buffer svo_buffer(nullptr, 0, draw_type::dynamic_draw, buffer_type::shader_storage);
+			shader::shader compute_shader("shaders/svo_march.comp.glsl");
 
-			auto view = registry->view<movement>();
+			auto octree_entity = registry->view<svo::svo>().front();
+			auto octree_grid = registry->get<svo::svo>(octree_entity);
 
-			auto camera = registry->get<gfx::camera>(camera_entity);
-			auto svo = registry->get<svo::svo>(svo_entity);
-
-			gfx::clear(gfx::clear_buffer::Color | gfx::clear_buffer::Depth);
-
-			framework->shader->bind();
-
-			// Perform raycasting for each camera position
-			for (auto [entity, movement] : view.each())
-			{
-				ray::raycast cast(movement.position, camera.get_direction());
-
-				const float VIEW_DISTANCE = 100.0f;
-
-				glm::vec3 deltas(1.0f, 1.0f, 1.0f);
-				glm::vec3 steps(1.0f, 1.0f, 1.0f);
-
-				cast.set_origin(movement.position);
-
-				// Perform ray marching
-				float distance = svo.march(cast, VIEW_DISTANCE);
-
-				if (distance >= 0.0f && distance < VIEW_DISTANCE)
-				{
-					glm::vec3 intersection_point = cast.get_origin() + cast.get_direction() * distance;
-				}
-			}
+			octree_grid.bind_to_gpu(&svo_buffer);
+			compute_shader.dispatch_compute(128, 128, 128);
 		}
 
-		void
-		update_camera(const frame::tick_event &event)
+		void update_camera(const frame::tick_event &event)
 		{
 			auto registry = event.registry;
 			auto framework = static_cast<test_framework *>(event.data);

@@ -12,7 +12,7 @@
 
 namespace shader
 {
-	enum class ShaderType
+	enum class shader_type
 	{
 		Vertex = GL_VERTEX_SHADER,
 		Fragment = GL_FRAGMENT_SHADER,
@@ -26,8 +26,8 @@ namespace shader
 		{
 			id = glCreateProgram();
 
-			this->compile(vertex_file_path, ShaderType::Vertex);
-			this->compile(fragment_file_path, ShaderType::Fragment);
+			this->compile(vertex_file_path, shader_type::Vertex);
+			this->compile(fragment_file_path, shader_type::Fragment);
 			this->link();
 		}
 
@@ -35,7 +35,7 @@ namespace shader
 		{
 			id = glCreateProgram();
 
-			this->compile(compute_file_path, ShaderType::Compute);
+			this->compile(compute_file_path, shader_type::Compute);
 			this->link();
 		}
 
@@ -67,11 +67,18 @@ namespace shader
 			glDeleteProgram(id);
 		}
 
+		void dispatch_compute(int local_x, int local_y, int local_z)
+		{
+			this->bind();
+			glDispatchCompute(local_x, local_y, local_z);
+			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+		}
+
 	private:
 		GLuint id;
 		std::map<const char *, GLuint> uniform_map;
 
-		void compile(const char *file_path, ShaderType type)
+		void compile(const char *file_path, shader_type type)
 		{
 			GLuint shader_id = glCreateShader(static_cast<int>(type));
 

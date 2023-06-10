@@ -166,8 +166,48 @@ namespace svo
 			}
 		}
 
+		int count_voxels(const node *node)
+		{
+			if (!node)
+			{
+				return 0;
+			}
+
+			int count = 1;
+
+			for (int i = 0; i < 8; i++)
+			{
+				count += count_voxels(node->children[i]);
+			}
+
+			return count;
+		}
+
+		void flatten_octree(const node *node, std::vector<voxel> &voxelData, int &currentIndex)
+		{
+			if (!node)
+			{
+				return;
+			}
+
+			voxelData[currentIndex] = node->voxels[0];
+			currentIndex++;
+
+			for (int i = 0; i < 8; i++)
+			{
+				flatten_octree(node->children[i], voxelData, currentIndex);
+			}
+		}
+
 		void bind_to_gpu(buffer::buffer *buffer)
 		{
+			int numVoxels = count_voxels(root);
+			int current = 0;
+
+			std::vector<voxel> voxelData(numVoxels);
+			flatten_octree(root, voxelData, current);
+
+			buffer->write(voxelData.data(), sizeof(voxel) * numVoxels, 0);
 		}
 
 	private:

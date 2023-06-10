@@ -326,7 +326,7 @@ public:
 
 		dispatcher.sink<frame::tick_event>().connect<&listener::update_gui>(listener);
 		dispatcher.sink<frame::tick_event>().connect<&listener::update_camera>(listener);
-		dispatcher.sink<frame::tick_event>().connect<&listener::tick>(listener);
+		dispatcher.sink<frame::tick_event>().connect<&listener::tick_svo>(listener);
 		dispatcher.sink<poll_input_event>().connect<&listener::input>(listener);
 	}
 };

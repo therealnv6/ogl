@@ -35,7 +35,8 @@ namespace buffer
 		 *          using the "size" parameter, as resizing later on is not recommended unless needed.
 		 */
 		buffer(void *data, int size, draw_type type, buffer_type buffer_type)
-			: draw_type { type }
+			: _draw_type { type }
+			, _buffer_type(buffer_type)
 			, size { size }
 		{
 			glGenBuffers(1, &buffer_id);
@@ -56,7 +57,7 @@ namespace buffer
 		void update(void *data)
 		{
 			this->bind([&]() {
-				glBufferSubData(static_cast<int>(buffer_type), 0, size, data);
+				glBufferSubData(static_cast<int>(_buffer_type), 0, size, data);
 			});
 		}
 
@@ -75,7 +76,7 @@ namespace buffer
 			// if (size <= new_size)
 			{
 				this->bind([&]() {
-					glBufferData(static_cast<int>(buffer_type), new_size, nullptr, static_cast<int>(draw_type));
+					glBufferData(static_cast<int>(_buffer_type), new_size, nullptr, static_cast<int>(_draw_type));
 				});
 				size = new_size;
 			}
@@ -94,7 +95,7 @@ namespace buffer
 		void write(void *data, int data_size, int offset)
 		{
 			this->bind([&]() {
-				glBufferSubData(static_cast<int>(buffer_type), offset, data_size, data);
+				glBufferSubData(static_cast<int>(_buffer_type), offset, data_size, data);
 			});
 		}
 
@@ -109,9 +110,9 @@ namespace buffer
 		 */
 		void bind(std::function<void()> callback)
 		{
-			glBindBuffer(static_cast<int>(buffer_type), buffer_id);
+			glBindBuffer(static_cast<int>(_buffer_type), buffer_id);
 			callback();
-			glBindBuffer(static_cast<int>(buffer_type), 0);
+			glBindBuffer(static_cast<int>(_buffer_type), 0);
 		}
 
 		/**
@@ -157,8 +158,8 @@ namespace buffer
 
 	private:
 		GLuint buffer_id;
-		draw_type draw_type;
-		buffer_type buffer_type;
+		draw_type _draw_type;
+		buffer_type _buffer_type;
 		int size;
 	};
 

@@ -173,7 +173,9 @@ public:
 		void tick_svo(const frame::tick_event &event)
 		{
 			auto registry = event.registry;
+			auto framework = static_cast<test_framework *>(event.data);
 
+			// we'll have to move this somewhere else but i'm unwell so i'll do that later
 			buffer::buffer svo_buffer(nullptr, 0, draw_type::dynamic_draw, buffer_type::shader_storage);
 			shader::shader compute_shader("shaders/svo_march.comp.glsl");
 
@@ -182,6 +184,8 @@ public:
 
 			octree_grid.bind_to_gpu(&svo_buffer);
 			compute_shader.dispatch_compute(128, 128, 128);
+
+			framework->shader->bind();
 		}
 
 		void update_camera(const frame::tick_event &event)
@@ -319,6 +323,7 @@ public:
 
 		registry.emplace<voxel::grid<CHUNK_WIDTH, CHUNK_HEIGHT, CHUNK_DEPTH>>(registry.create(), grid);
 
+		registry.emplace<svo::svo>(registry.create(), glm::vec3(0.0, 0.0, 0.0), glm::vec3(1.0, 0.5, 0.5), 1.0);
 		registry.emplace<gfx::camera>(registry.create());
 		registry.emplace<movement>(registry.create());
 

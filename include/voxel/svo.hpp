@@ -30,7 +30,6 @@ namespace svo
 		 * @remarks This constructor initializes the SVO with a root voxel at the specified position, color, and size.
 		 */
 		svo(const glm::vec3 &position, const glm::vec3 &color, float root_size)
-			: buffer(buffer::buffer(nullptr, 0, draw_type::dynamic_draw, buffer_type::shader_storage))
 		{
 			root = new node();
 			root->voxels[0] = voxel { position, color, root_size };
@@ -213,6 +212,5 @@ namespace svo
 	private:
 		node *root;
 		float min_voxel_size = 0.01f;
-		buffer::buffer buffer;
 	};
 };

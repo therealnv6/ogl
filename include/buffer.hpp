@@ -15,6 +15,7 @@ enum class buffer_type : int
 {
 	array = GL_ARRAY_BUFFER,
 	shader_storage = GL_SHADER_STORAGE_BUFFER,
+	uniform_buffer = GL_UNIFORM_BUFFER,
 };
 
 namespace buffer
@@ -146,6 +147,11 @@ namespace buffer
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_id);
 		}
 
+		void bind_buffer_base(int *binding)
+		{
+			glBindBufferBase(GL_UNIFORM_BUFFER, *binding, buffer_id);
+		}
+
 		/**
 		 * Returns the size (in bytes) of the data stored in the buffer.
 		 *
@@ -177,5 +183,13 @@ namespace buffer
 	 *          the specified index to it. The generated vertex array object can be used to encapsulate
 	 *          vertex attribute configurations and vertex buffer bindings.
 	 */
-	GLuint reserve_vertex_array(GLuint index = 1);
+	static GLuint reserve_vertex_array(GLuint index = 1)
+	{
+		GLuint id;
+
+		glGenVertexArrays(index, &id);
+		glBindVertexArray(id);
+
+		return id;
+	}
 }

@@ -74,6 +74,36 @@ namespace shader
 			glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 		}
 
+		void set_uniform_buffer(const std::string &name, GLuint bufferBinding)
+		{
+			GLuint blockIndex = glGetUniformBlockIndex(id, name.c_str());
+			glUniformBlockBinding(id, blockIndex, bufferBinding);
+			glBindBufferBase(GL_UNIFORM_BUFFER, bufferBinding, bufferBinding);
+		}
+
+		template<typename T>
+		void set_uniform(const std::string &name, const T &value)
+		{
+			GLuint program = id;
+			GLint location = glGetUniformLocation(program, name.c_str());
+
+			if (location != -1)
+			{
+				if constexpr (std::is_same_v<T, int>)
+				{
+					glProgramUniform1i(program, location, value);
+				}
+				else if constexpr (std::is_same_v<T, float>)
+				{
+					glProgramUniform1f(program, location, value);
+				}
+				else if constexpr (std::is_same_v<T, glm::vec3>)
+				{
+					glProgramUniform3fv(program, location, 1, glm::value_ptr(value));
+				}
+			}
+		}
+
 	private:
 		GLuint id;
 		std::map<const char *, GLuint> uniform_map;

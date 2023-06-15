@@ -57,7 +57,7 @@ set(IMGUI_SOURCES
 add_library(${PROJECT_NAME} STATIC ${IMGUI_SOURCES} ${SOURCES})
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE 
+target_include_directories(${PROJECT_NAME} PUBLIC 
     include
     ${CMAKE_CURRENT_BINARY_DIR}
     ${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS}
@@ -65,7 +65,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     "thirdparty/imterm/include/"
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE 
+target_link_libraries(${PROJECT_NAME} PUBLIC 
     glfw 
     EnTT::EnTT
     GLEW::GLEW ${GLEW_LIBRARIES} 
@@ -74,5 +74,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 IF (WIN32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE dbghelp)
+    target_link_libraries(${PROJECT_NAME} PUBLIC dbghelp)
 ENDIF()

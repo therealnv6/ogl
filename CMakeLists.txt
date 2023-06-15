@@ -75,4 +75,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 IF (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE dbghelp)
-ENDIF
+ENDIF()

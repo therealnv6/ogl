@@ -54,7 +54,7 @@ set(IMGUI_SOURCES
   ${IMGUI_DIR}/imgui_widgets.cpp
 )
 
-add_executable(${PROJECT_NAME} ${IMGUI_SOURCES} ${SOURCES})
+add_library(${PROJECT_NAME} STATIC ${IMGUI_SOURCES} ${SOURCES})
 target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
@@ -75,4 +75,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 IF (WIN32)
     target_link_libraries(${PROJECT_NAME} PRIVATE dbghelp)
-ENDIF()
+ENDIF

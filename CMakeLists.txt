@@ -54,21 +54,21 @@ set(IMGUI_SOURCES
   ${IMGUI_DIR}/imgui_widgets.cpp
 )
 
+# Create the library
 add_library(${PROJECT_NAME} STATIC ${IMGUI_SOURCES} ${SOURCES})
-target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
 
-target_include_directories(${PROJECT_NAME} PUBLIC 
-    include
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${GLEW_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS}
-    "thirdparty/glfw/include/"
-    "thirdparty/imterm/include/"
+# Set the library's include directories
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
 )
 
+# Link the necessary libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC 
     glfw 
     EnTT::EnTT
-    GLEW::GLEW ${GLEW_LIBRARIES} 
+    GLEW::GLEW
     ${OPENGL_LIBRARY} 
     spdlog::spdlog
 )

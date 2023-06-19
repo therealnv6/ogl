@@ -113,8 +113,6 @@ namespace frame
 			registry.emplace<time>(this->registry.create(), glfwGetTime(), 0.0f);
 		}
 
-		virtual void initialize() = 0;
-
 		void init_gui()
 		{
 			imgui = true;

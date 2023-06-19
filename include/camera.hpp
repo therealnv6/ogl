@@ -20,7 +20,7 @@ namespace gfx
 			float fov = 45.0f,
 			float near_plane = 0.1f,
 			float far_plane = 100000.0f)
-			: projection(projection_type)
+			: projection_type(projection_type)
 			, fov(fov)
 			, near_plane(near_plane)
 			, far_plane(far_plane)
@@ -30,7 +30,7 @@ namespace gfx
 		camera(projection projection_type,
 			float left, float right, float bottom, float top,
 			float near_plane = 0.1f, float far_plane = 100000.0f)
-			: projection(projection_type)
+			: projection_type(projection_type)
 			, left(left)
 			, right(right)
 			, bottom(bottom)
@@ -41,7 +41,7 @@ namespace gfx
 		}
 
 		camera(projection projection_type)
-			: projection(projection_type)
+			: projection_type(projection_type)
 		{
 		}
 
@@ -52,11 +52,11 @@ namespace gfx
 
 		[[nodiscard]] glm::mat4 get_projection(float aspect_ratio = 16.0 / 9.0) const
 		{
-			if (projection == projection::perspective)
+			if (projection_type == projection::perspective)
 			{
 				return glm::perspective(glm::radians(fov), aspect_ratio, near_plane, far_plane);
 			}
-			else if (projection == projection::orthographic)
+			else if (projection_type == projection::orthographic)
 			{
 				return glm::ortho(left, right, bottom, top, near_plane, far_plane);
 			}
@@ -103,7 +103,7 @@ namespace gfx
 		}
 
 	private:
-		gfx::projection projection;
+		gfx::projection projection_type;
 		glm::vec3 position = glm::vec3(0.0f, 0.0f, 5.0f);
 		glm::vec3 direction = glm::vec3(0.0f, 0.0f, -1.0f);
 		glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);

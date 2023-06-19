@@ -99,19 +99,17 @@ namespace frame
 	public:
 		gfx::context *context;
 
-		entt::dispatcher dispatcher;
-		entt::registry registry;
+		entt::dispatcher &dispatcher;
+		entt::registry &registry;
 
 		bool imgui = false;
 		time frame;
 
-		framework(gfx::context *context)
+		framework(gfx::context *context, entt::registry &registry, entt::dispatcher &dispatcher)
+			: registry(registry)
+			, dispatcher(dispatcher)
 		{
 			this->context = context;
-
-			this->registry = entt::basic_registry();
-			this->dispatcher = entt::dispatcher {};
-
 			registry.emplace<time>(this->registry.create(), glfwGetTime(), 0.0f);
 		}
 

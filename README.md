@@ -8,12 +8,12 @@ This used to be a voxel engine; but instead of just focusing on voxels, I decide
 
 # CMake
 
-## Prerequisites
+### Prerequisites
 
 - C++20 (or higher) compatible compiler.
 - [spdlog](https://github.com/gabime/spdlog)
 
-# Implementing
+### Implementing
 
 Implementing this library into your own project is very easy and straight-forward using CMake, it's generally recommended to add `ogl` as a submodule in your project, in a directory such as a `thirdparty` directory. here is a small example of how to do this, assuming a `thirdparty` directory is being used:
 

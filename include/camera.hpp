@@ -98,6 +98,23 @@ namespace gfx
 			up = rotation_quat * up;
 		}
 
+		void rotate_to(float yaw, float pitch)
+		{
+			// Convert yaw and pitch from degrees to radians
+			yaw = glm::radians(yaw);
+			pitch = glm::radians(pitch);
+
+			// Calculate the new direction vector
+			glm::vec3 newDirection;
+			newDirection.x = cos(yaw) * cos(pitch);
+			newDirection.y = sin(pitch);
+			newDirection.z = sin(yaw) * cos(pitch);
+			direction = glm::normalize(newDirection);
+
+			// Recalculate the up vector
+			up = glm::normalize(glm::cross(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), direction), direction));
+		}
+
 		glm::vec3 get_position()
 		{
 			return position;

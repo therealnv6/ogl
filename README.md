@@ -8,7 +8,14 @@ This used to be a voxel engine; but instead of just focusing on voxels, I decide
 
 # CMake
 
-Implementing this library into your own project is very easy and straight-forward using CMake, here is a small example of how to do this:
+## Prerequisites
+
+- C++20 (or higher) compatible compiler.
+- [spdlog](https://github.com/gabime/spdlog)
+
+# Implementing
+
+Implementing this library into your own project is very easy and straight-forward using CMake, it's generally recommended to add `ogl` as a submodule in your project, in a directory such as a `thirdparty` directory. here is a small example of how to do this, assuming a `thirdparty` directory is being used:
 
 ```cmake
 add_subdirectory(thirdparty/ogl)
@@ -20,7 +27,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ogl)
 The usage is very straight-forward, mostly using the EnTT entity-component system. Here is a very small example:
 
 ```cpp
-
 struct example_listener {
   void tick(const frame::tick_event &event)
   {
@@ -30,6 +36,7 @@ struct example_listener {
 
 int main()
 {
+  // create an OpenGL context with a window size of 2560x1440
   gfx::context context("voxel", 2560, 1440);
 
   // we have to make our own registry and dispatcher *before* we make the framework, as the framework needs these.  
@@ -45,6 +52,7 @@ int main()
     context.input_mode(input::input_mode::Cursor, GLFW_CURSOR_DISABLED);
   }
 
+  // set up some basic graphics options
   {
     gfx::enable(gfx::enable_fields::CullFace);
     gfx::depth(gfx::depth_function::Less);
@@ -54,7 +62,7 @@ int main()
 
   // this is just a small example of how to insert a resource into the entt registry, ideally, you should use
   // the actual resource management, look here: https://github.com/skypjack/entt/wiki/Crash-Course:-resource-management
-  registry.ctx().emplace<shader>("shaders/example.vert", "shaders/simple.frag");
+  registry.ctx().emplace<shader::shader>("shaders/example.vert", "shaders/simple.frag");
 
   // this makes a new signal for the frame::tick_event within the dispatcher we created above
   auto tick_signal = dispatcher.sink<frame::tick_event>();
@@ -64,5 +72,8 @@ int main()
 
   // this is just to initialize ImGui, feel free to call this wherever.
   framework.init_gui();
+
+  // this will cause the `framework` to completely block the current thread until the game loop ends.
+  framework.run();
 }
 ```

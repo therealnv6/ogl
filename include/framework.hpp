@@ -94,6 +94,11 @@ namespace frame
 		entt::registry *registry;
 	};
 
+	struct init_event {
+		frame::framework *data;
+		entt::registry *registry;
+	};
+
 	class framework
 	{
 	public:
@@ -161,6 +166,8 @@ namespace frame
 		void run()
 		{
 			context->take([&](auto window) {
+				dispatcher.trigger(init_event { this, &registry });
+
 				do
 				{
 					context->poll_events();
